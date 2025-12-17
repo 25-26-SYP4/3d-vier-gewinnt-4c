@@ -417,9 +417,6 @@ FodyWeavers.xsd
 *.msm
 *.msp
 
-#Mac File System
-.DS_Store
-
 # Unity
 [Ll]ibrary/
 [Tt]emp/
