@@ -430,3 +430,7 @@ FodyWeavers.xsd
 .idea/
 .DS_Store
 Thumbs.db
+
+# Unity user-specific settings (Editor layouts, UI state, etc.)
+UserSettings/
+*.dwlt
