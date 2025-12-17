@@ -416,15 +416,6 @@ FodyWeavers.xsd
 *.msm
 *.msp
 
-# Unity
-[Ll]ibrary/
-[Tt]emp/
-[Oo]bj/
-[Bb]uild/
-[Bb]uilds/
-[Ll]ogs/
-[Mm]emoryCaptures/
-
 # IDE / OS
 .vscode/
 .idea/
