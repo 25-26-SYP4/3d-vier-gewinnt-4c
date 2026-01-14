@@ -2,10 +2,10 @@ using UnityEngine;
 
 public class MouseHover : MonoBehaviour
 {
+    public Color hoverColor = Color.yellow;
+
     private Renderer lastRenderer;
     private Color lastColor;
-
-    public Color hoverColor = Color.yellow;
 
     void Update()
     {
@@ -14,21 +14,36 @@ public class MouseHover : MonoBehaviour
 
         if (Physics.Raycast(ray, out hit))
         {
-            Renderer rend = hit.collider.GetComponent<Renderer>();
+            Transform hitTransform = hit.transform;
 
-            if (rend != null && rend != lastRenderer)
+            if (IsPole(hitTransform))
             {
-                ClearLast();
+                Renderer rend = hitTransform.GetComponent<Renderer>();
 
-                lastRenderer = rend;
-                lastColor = rend.material.color;
-                rend.material.color = hoverColor;
+                if (rend != null && rend != lastRenderer)
+                {
+                    ClearLast();
+
+                    lastRenderer = rend;
+                    lastColor = rend.material.color;
+
+                    rend.material = new Material(rend.material);
+                    rend.material.color = hoverColor;
+                }
+                return;
             }
         }
-        else
-        {
-            ClearLast();
-        }
+
+        ClearLast();
+    }
+
+    bool IsPole(Transform t)
+    {
+
+        if (!t.name.StartsWith("Pole"))
+            return false;
+
+        return t.IsChildOf(transform);
     }
 
     void ClearLast()
