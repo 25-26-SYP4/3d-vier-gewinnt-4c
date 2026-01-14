@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 3874313085218999410}
   - component: {fileID: 9215218184310377148}
   - component: {fileID: 6107026707256447321}
-  - component: {fileID: 7537991547981282138}
+  - component: {fileID: 7639934183827409781}
   m_Layer: 0
   m_Name: Pole
   m_TagString: Untagged
@@ -1300,8 +1300,8 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4425735703508942797}
   m_Mesh: {fileID: 0}
---- !u!64 &7537991547981282138
-MeshCollider:
+--- !u!136 &7639934183827409781
+CapsuleCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -1318,7 +1318,8 @@ MeshCollider:
   m_IsTrigger: 0
   m_ProvidesContacts: 0
   m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 0
-  m_CookingOptions: 30
-  m_Mesh: {fileID: 0}
+  serializedVersion: 2
+  m_Radius: 0.7
+  m_Height: 2
+  m_Direction: 1
+  m_Center: {x: 0, y: 0, z: 0}

@@ -10,15 +10,14 @@ public class MouseHover : MonoBehaviour
     void Update()
     {
         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-        RaycastHit hit;
 
-        if (Physics.Raycast(ray, out hit))
+        if (Physics.Raycast(ray, out RaycastHit hit))
         {
-            Transform hitTransform = hit.transform;
+            Transform pole = GetPoleFromHit(hit.transform);
 
-            if (IsPole(hitTransform))
+            if (pole != null)
             {
-                Renderer rend = hitTransform.GetComponent<Renderer>();
+                Renderer rend = pole.GetComponent<Renderer>();
 
                 if (rend != null && rend != lastRenderer)
                 {
@@ -37,13 +36,17 @@ public class MouseHover : MonoBehaviour
         ClearLast();
     }
 
-    bool IsPole(Transform t)
+    Transform GetPoleFromHit(Transform hit)
     {
+        while (hit != null)
+        {
+            if (hit.CompareTag("Pole"))
+                return hit;
 
-        if (!t.name.StartsWith("Pole"))
-            return false;
+            hit = hit.parent;
+        }
 
-        return t.IsChildOf(transform);
+        return null;
     }
 
     void ClearLast()
