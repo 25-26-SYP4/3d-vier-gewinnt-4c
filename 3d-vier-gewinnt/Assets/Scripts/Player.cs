@@ -1,6 +1,8 @@
 using UnityEngine;
 
-public class Player
+public enum Player
 {
-    
+    None,
+    Player1,
+    Player2
 }
