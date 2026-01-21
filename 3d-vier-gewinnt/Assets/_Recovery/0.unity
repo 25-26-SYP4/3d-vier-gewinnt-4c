@@ -6311,10 +6311,6 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 171860172}
     - target: {fileID: 197982043669322626, guid: 0d47ae7e53ea9ef41aba07b82b744df5, type: 3}
-      propertyPath: m_Name
-      value: Pole3
-      objectReference: {fileID: 0}
-    - target: {fileID: 197982043669322626, guid: 0d47ae7e53ea9ef41aba07b82b744df5, type: 3}
       propertyPath: m_TagString
       value: Pole
       objectReference: {fileID: 0}
@@ -6326,10 +6322,6 @@ PrefabInstance:
       propertyPath: m_Mesh
       value: 
       objectReference: {fileID: 1728584041}
-    - target: {fileID: 384182655771213252, guid: 0d47ae7e53ea9ef41aba07b82b744df5, type: 3}
-      propertyPath: m_Name
-      value: Row3
-      objectReference: {fileID: 0}
     - target: {fileID: 397534222253935920, guid: 0d47ae7e53ea9ef41aba07b82b744df5, type: 3}
       propertyPath: m_Mesh
       value: 
@@ -6370,18 +6362,10 @@ PrefabInstance:
       propertyPath: m_VersionIndex
       value: 60
       objectReference: {fileID: 0}
-    - target: {fileID: 1084579796095885485, guid: 0d47ae7e53ea9ef41aba07b82b744df5, type: 3}
-      propertyPath: m_Name
-      value: Row1
-      objectReference: {fileID: 0}
     - target: {fileID: 1270132407607454774, guid: 0d47ae7e53ea9ef41aba07b82b744df5, type: 3}
       propertyPath: m_Mesh
       value: 
       objectReference: {fileID: 1513562240}
-    - target: {fileID: 1337983095212225825, guid: 0d47ae7e53ea9ef41aba07b82b744df5, type: 3}
-      propertyPath: m_Name
-      value: Pole0
-      objectReference: {fileID: 0}
     - target: {fileID: 1337983095212225825, guid: 0d47ae7e53ea9ef41aba07b82b744df5, type: 3}
       propertyPath: m_TagString
       value: Pole
@@ -6407,16 +6391,8 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 1702953497}
     - target: {fileID: 2068331291953109701, guid: 0d47ae7e53ea9ef41aba07b82b744df5, type: 3}
-      propertyPath: m_Name
-      value: Pole2
-      objectReference: {fileID: 0}
-    - target: {fileID: 2068331291953109701, guid: 0d47ae7e53ea9ef41aba07b82b744df5, type: 3}
       propertyPath: m_TagString
       value: Pole
-      objectReference: {fileID: 0}
-    - target: {fileID: 2425695444337854140, guid: 0d47ae7e53ea9ef41aba07b82b744df5, type: 3}
-      propertyPath: m_Name
-      value: Pole3
       objectReference: {fileID: 0}
     - target: {fileID: 2425695444337854140, guid: 0d47ae7e53ea9ef41aba07b82b744df5, type: 3}
       propertyPath: m_TagString
@@ -6463,10 +6439,6 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2617296470809326148, guid: 0d47ae7e53ea9ef41aba07b82b744df5, type: 3}
-      propertyPath: m_Name
-      value: Pole3
-      objectReference: {fileID: 0}
-    - target: {fileID: 2617296470809326148, guid: 0d47ae7e53ea9ef41aba07b82b744df5, type: 3}
       propertyPath: m_TagString
       value: Pole
       objectReference: {fileID: 0}
@@ -6483,16 +6455,8 @@ PrefabInstance:
       value: 60
       objectReference: {fileID: 0}
     - target: {fileID: 3043927199662953470, guid: 0d47ae7e53ea9ef41aba07b82b744df5, type: 3}
-      propertyPath: m_Name
-      value: Pole1
-      objectReference: {fileID: 0}
-    - target: {fileID: 3043927199662953470, guid: 0d47ae7e53ea9ef41aba07b82b744df5, type: 3}
       propertyPath: m_TagString
       value: Pole
-      objectReference: {fileID: 0}
-    - target: {fileID: 3171668170487757865, guid: 0d47ae7e53ea9ef41aba07b82b744df5, type: 3}
-      propertyPath: m_Name
-      value: Pole1
       objectReference: {fileID: 0}
     - target: {fileID: 3171668170487757865, guid: 0d47ae7e53ea9ef41aba07b82b744df5, type: 3}
       propertyPath: m_TagString
@@ -6506,21 +6470,9 @@ PrefabInstance:
       propertyPath: m_Mesh
       value: 
       objectReference: {fileID: 1129396787}
-    - target: {fileID: 3575331245311527448, guid: 0d47ae7e53ea9ef41aba07b82b744df5, type: 3}
-      propertyPath: m_Name
-      value: Row2
-      objectReference: {fileID: 0}
-    - target: {fileID: 3651296035975165778, guid: 0d47ae7e53ea9ef41aba07b82b744df5, type: 3}
-      propertyPath: m_Name
-      value: Pole0
-      objectReference: {fileID: 0}
     - target: {fileID: 3651296035975165778, guid: 0d47ae7e53ea9ef41aba07b82b744df5, type: 3}
       propertyPath: m_TagString
       value: Pole
-      objectReference: {fileID: 0}
-    - target: {fileID: 3652354091197435044, guid: 0d47ae7e53ea9ef41aba07b82b744df5, type: 3}
-      propertyPath: m_Name
-      value: Pole1
       objectReference: {fileID: 0}
     - target: {fileID: 3652354091197435044, guid: 0d47ae7e53ea9ef41aba07b82b744df5, type: 3}
       propertyPath: m_TagString
@@ -6558,10 +6510,6 @@ PrefabInstance:
       propertyPath: m_Mesh
       value: 
       objectReference: {fileID: 1160263703}
-    - target: {fileID: 4564409915515542941, guid: 0d47ae7e53ea9ef41aba07b82b744df5, type: 3}
-      propertyPath: m_Name
-      value: Row0
-      objectReference: {fileID: 0}
     - target: {fileID: 4870054665145728362, guid: 0d47ae7e53ea9ef41aba07b82b744df5, type: 3}
       propertyPath: m_Mesh
       value: 
@@ -6611,10 +6559,6 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 1937755625}
     - target: {fileID: 5495652387799408273, guid: 0d47ae7e53ea9ef41aba07b82b744df5, type: 3}
-      propertyPath: m_Name
-      value: Pole2
-      objectReference: {fileID: 0}
-    - target: {fileID: 5495652387799408273, guid: 0d47ae7e53ea9ef41aba07b82b744df5, type: 3}
       propertyPath: m_TagString
       value: Pole
       objectReference: {fileID: 0}
@@ -6631,10 +6575,6 @@ PrefabInstance:
       value: 60
       objectReference: {fileID: 0}
     - target: {fileID: 5822113853879799324, guid: 0d47ae7e53ea9ef41aba07b82b744df5, type: 3}
-      propertyPath: m_Name
-      value: Pole2
-      objectReference: {fileID: 0}
-    - target: {fileID: 5822113853879799324, guid: 0d47ae7e53ea9ef41aba07b82b744df5, type: 3}
       propertyPath: m_TagString
       value: Pole
       objectReference: {fileID: 0}
@@ -6645,10 +6585,6 @@ PrefabInstance:
     - target: {fileID: 5915140284918554042, guid: 0d47ae7e53ea9ef41aba07b82b744df5, type: 3}
       propertyPath: m_VersionIndex
       value: 60
-      objectReference: {fileID: 0}
-    - target: {fileID: 6125929388025068643, guid: 0d47ae7e53ea9ef41aba07b82b744df5, type: 3}
-      propertyPath: m_Name
-      value: Pole0
       objectReference: {fileID: 0}
     - target: {fileID: 6125929388025068643, guid: 0d47ae7e53ea9ef41aba07b82b744df5, type: 3}
       propertyPath: m_TagString
@@ -6670,10 +6606,6 @@ PrefabInstance:
       propertyPath: m_Mesh
       value: 
       objectReference: {fileID: 267640126}
-    - target: {fileID: 7339634282695946906, guid: 0d47ae7e53ea9ef41aba07b82b744df5, type: 3}
-      propertyPath: m_Name
-      value: Pole1
-      objectReference: {fileID: 0}
     - target: {fileID: 7339634282695946906, guid: 0d47ae7e53ea9ef41aba07b82b744df5, type: 3}
       propertyPath: m_TagString
       value: Pole
@@ -6703,20 +6635,12 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 1021170921}
     - target: {fileID: 7795599046419162020, guid: 0d47ae7e53ea9ef41aba07b82b744df5, type: 3}
-      propertyPath: m_Name
-      value: Pole0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7795599046419162020, guid: 0d47ae7e53ea9ef41aba07b82b744df5, type: 3}
       propertyPath: m_TagString
       value: Pole
       objectReference: {fileID: 0}
     - target: {fileID: 7813750181107624539, guid: 0d47ae7e53ea9ef41aba07b82b744df5, type: 3}
       propertyPath: m_Name
       value: GameBoard
-      objectReference: {fileID: 0}
-    - target: {fileID: 7913680456507637206, guid: 0d47ae7e53ea9ef41aba07b82b744df5, type: 3}
-      propertyPath: m_Name
-      value: Pole3
       objectReference: {fileID: 0}
     - target: {fileID: 7913680456507637206, guid: 0d47ae7e53ea9ef41aba07b82b744df5, type: 3}
       propertyPath: m_TagString
@@ -6738,10 +6662,6 @@ PrefabInstance:
       propertyPath: m_Mesh
       value: 
       objectReference: {fileID: 977876575}
-    - target: {fileID: 8650203164644377250, guid: 0d47ae7e53ea9ef41aba07b82b744df5, type: 3}
-      propertyPath: m_Name
-      value: Pole2
-      objectReference: {fileID: 0}
     - target: {fileID: 8650203164644377250, guid: 0d47ae7e53ea9ef41aba07b82b744df5, type: 3}
       propertyPath: m_TagString
       value: Pole
