@@ -43,6 +43,11 @@ public class ClickSpawner : MonoBehaviour
         int stackCount = poleStacks[pole];
 
         Vector3 spawnPos = pole.position;
+
+        int poleY = int.Parse(pole.name.Replace("Pole", ""));
+        int rowX = int.Parse(pole.parent.name.Substring(3));
+        int heightZ = stackCount;
+
         spawnPos.y += spawnHeightOffset + stackCount * pieceHeight;
 
         Instantiate(GamePiece, spawnPos, Quaternion.identity);
