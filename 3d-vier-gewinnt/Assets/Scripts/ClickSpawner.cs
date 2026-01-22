@@ -4,16 +4,19 @@ using UnityEngine;
 
 public class ClickSpawner : MonoBehaviour
 {
-    public GameObject GamePiece;
+    public GameObject GamePiecePlayer1;
+    public GameObject GamePiecePlayer2;
     public Camera Camera;
     public float spawnHeightOffset = 2.5f;
 
-    private float pieceHeight;
+    private float pieceHeightPlayer1;
+    private float pieceHeightPlayer2;
     private Dictionary<Transform, int> poleStacks = new Dictionary<Transform, int>();
 
     void Start()
     {
-        pieceHeight = GamePiece.GetComponent<Collider>().bounds.size.y;
+        pieceHeightPlayer1 = GamePiecePlayer1.GetComponent<Collider>().bounds.size.y;
+        pieceHeightPlayer2 = GamePiecePlayer2.GetComponent<Collider>().bounds.size.y;
     }
 
     void Update()
@@ -46,11 +49,11 @@ public class ClickSpawner : MonoBehaviour
 
         int poleY = int.Parse(pole.name.Replace("Pole", ""));
         int rowX = int.Parse(pole.parent.name.Substring(3));
-        int heightZ = stackCount;
+        int heightZ = stackCount; 
 
-        spawnPos.y += spawnHeightOffset + stackCount * pieceHeight;
+        spawnPos.y += spawnHeightOffset + stackCount * pieceHeightPlayer1;
 
-        Instantiate(GamePiece, spawnPos, Quaternion.identity);
+        Instantiate(GamePiecePlayer1, spawnPos, Quaternion.identity);
 
         poleStacks[pole]++;
     }
