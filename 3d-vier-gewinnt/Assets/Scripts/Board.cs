@@ -67,15 +67,36 @@ public class Board
 
                     for (int d = 0;  d < directions.GetLength(0); d++)
                     {
-                        
+                        if (HasFour(player, x, y, z,
+                            directions[d, 0],
+                            directions[d, 1],
+                            directions[d, 2]))
+                            return true;
                     }
                 }
             }
         }
-        return true;
+        return false;
     }
-    private bool HasFour(int x, int y, int z, int dx, int dy, int dz)
+    private bool HasFour(Player player, int x, int y, int z, int dx, int dy, int dz)
     {
+        for (int i = 1; i < Size; i++)
+        {
+            int nx = x + dx * i;
+            int ny = y + dy * i;
+            int nz = z + dz * i;
+
+            if(nx < 0 || ny < 0 || nz < 0 ||
+                nx >= grid.GetLength(0) ||
+                ny >= grid.GetLength(1) ||
+                nz >= grid.GetLength(2))
+                return false;
+
+            if (grid[nx, ny, nz] != player)
+            {
+                return false;
+            }
+        }
         return true;
     }
 

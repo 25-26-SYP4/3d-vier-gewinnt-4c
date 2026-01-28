@@ -23,7 +23,10 @@ public class Game : MonoBehaviour
 
         Debug.Log($"Spielzug: {currentPlayer} -> {x},{y},{z}");
 
-        CheckWin();
+        if (board.CheckWin(currentPlayer))
+        {
+            Debug.Log(currentPlayer + " hat gewonnen!");
+        }
 
         SwitchPlayer();
     }
@@ -35,8 +38,5 @@ public class Game : MonoBehaviour
         Debug.Log($"{currentPlayer} ist an der Reihe!");
     }
 
-    private bool CheckWin()
-    {
-        return true;
-    }
+    
 }
