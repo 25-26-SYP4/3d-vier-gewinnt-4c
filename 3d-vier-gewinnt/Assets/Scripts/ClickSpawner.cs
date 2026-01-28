@@ -8,20 +8,18 @@ public class ClickSpawner : MonoBehaviour
     public GameObject GamePiecePlayer2;
     public Camera Camera;
     public float spawnHeightOffset = 2.5f;
+    public PoleManager poleManager;
 
-    private float pieceHeightPlayer1;
-    private float pieceHeightPlayer2;
+    private float pieceHeight;
     private Dictionary<Transform, int> poleStacks = new Dictionary<Transform, int>();
 
     void Start()
     {
-        pieceHeightPlayer1 = GamePiecePlayer1.GetComponent<Collider>().bounds.size.y;
-        pieceHeightPlayer2 = GamePiecePlayer2.GetComponent<Collider>().bounds.size.y;
+        pieceHeight = GamePiecePlayer1.GetComponent<Collider>().bounds.size.y;
     }
 
     void Update()
     {
-
         if (Input.GetMouseButtonDown(0))
         {
             Ray ray = Camera.ScreenPointToRay(Input.mousePosition);
@@ -38,24 +36,36 @@ public class ClickSpawner : MonoBehaviour
         }
     }
 
-    void SpawnPieceOnPole(Transform pole)
+    void SpawnPieceOnPole(Transform poleTransform)
     {
-        if (!poleStacks.ContainsKey(pole))
-            poleStacks[pole] = 0;
+        Pole pole = poleTransform.GetComponent<Pole>();
 
-        int stackCount = poleStacks[pole];
+        if (!poleStacks.ContainsKey(poleTransform))
+            poleStacks[poleTransform] = 0;
 
-        Vector3 spawnPos = pole.position;
+        Vector2Int index = poleManager.GetIndex(pole);
 
-        int poleY = int.Parse(pole.name.Replace("Pole", ""));
-        int rowX = int.Parse(pole.parent.name.Substring(3));
-        int heightZ = stackCount; 
+        int stackCount = poleStacks[poleTransform];
 
-        spawnPos.y += spawnHeightOffset + stackCount * pieceHeightPlayer1;
+        int x = index.x;
+        int y = index.y;
+        int z = stackCount;
+
+        Vector3 spawnPos = poleTransform.position;
+
+
+        spawnPos.y += spawnHeightOffset + stackCount * pieceHeight;
 
         Instantiate(GamePiecePlayer1, spawnPos, Quaternion.identity);
 
-        poleStacks[pole]++;
+        poleStacks[poleTransform]++;
+
+        if (poleStacks[poleTransform] == 4)
+        {
+            poleTransform.GetComponent<Collider>().enabled = false;
+            return;
+        }
+
     }
 
     Transform GetPoleFromHit(Transform hit)
