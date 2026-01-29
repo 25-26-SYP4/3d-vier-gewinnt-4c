@@ -13,6 +13,8 @@ public class ClickSpawner : MonoBehaviour
     private float pieceHeight;
     private Dictionary<Transform, int> poleStacks = new Dictionary<Transform, int>();
 
+    public Game gameManager;
+
     void Start()
     {
         pieceHeight = GamePiecePlayer1.GetComponent<Collider>().bounds.size.y;
@@ -53,6 +55,8 @@ public class ClickSpawner : MonoBehaviour
 
         Vector3 spawnPos = poleTransform.position;
 
+        // Game - TryMakeMove(x, y, z) aufrufen
+        gameManager.TryMakeMove(x, y, z);
 
         spawnPos.y += spawnHeightOffset + stackCount * pieceHeight;
 
