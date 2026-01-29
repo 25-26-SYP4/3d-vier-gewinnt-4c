@@ -78,26 +78,36 @@ public class Board
         }
         return false;
     }
+    
     private bool HasFour(Player player, int x, int y, int z, int dx, int dy, int dz)
     {
+        int count = 1;
+
+        count += CountDirection(player, x, y, z, dx, dy, dz);
+        count += CountDirection(player, x, y, z, -dx, -dy, -dz);
+
+        return count >= 4;
+    }
+
+    private int CountDirection(Player player, int x, int y, int z, int dx, int dy, int dz)
+    {
+        int c = 0;
         for (int i = 1; i < Size; i++)
         {
             int nx = x + dx * i;
             int ny = y + dy * i;
             int nz = z + dz * i;
 
-            if(nx < 0 || ny < 0 || nz < 0 ||
-                nx >= grid.GetLength(0) ||
-                ny >= grid.GetLength(1) ||
-                nz >= grid.GetLength(2))
-                return false;
+            if (nx < 0 || ny < 0 || nz < 0 ||
+                nx >= Size || ny >= Size || nz >= Size)
+                break;
 
             if (grid[nx, ny, nz] != player)
-            {
-                return false;
-            }
+                break;
+
+            c++;
         }
-        return true;
+        return c;
     }
 
 }
