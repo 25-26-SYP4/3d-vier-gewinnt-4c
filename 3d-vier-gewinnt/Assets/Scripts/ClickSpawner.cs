@@ -60,7 +60,14 @@ public class ClickSpawner : MonoBehaviour
 
         spawnPos.y += spawnHeightOffset + stackCount * pieceHeight;
 
-        Instantiate(GamePiecePlayer1, spawnPos, Quaternion.identity);
+        if (gameManager.currentPlayer == Player.Player1)
+        {
+            Instantiate(GamePiecePlayer1, spawnPos, Quaternion.identity);
+        }
+        else
+        {
+            Instantiate(GamePiecePlayer2, spawnPos, Quaternion.identity);
+        }
 
         poleStacks[poleTransform]++;
 
@@ -68,6 +75,11 @@ public class ClickSpawner : MonoBehaviour
         {
             poleTransform.GetComponent<Collider>().enabled = false;
             return;
+        }
+
+        if (gameManager.board.CheckWin(gameManager.currentPlayer))
+        {
+            string s = "cool";
         }
 
     }

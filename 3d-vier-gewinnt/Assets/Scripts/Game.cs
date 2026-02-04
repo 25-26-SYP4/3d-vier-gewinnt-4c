@@ -2,8 +2,8 @@ using UnityEngine;
 
 public class Game : MonoBehaviour
 {
-    private Board board;
-    private Player currentPlayer = Player.Player1;
+    public Board board;
+    public Player currentPlayer = Player.Player1;
 
     void Start()
     {
@@ -31,7 +31,7 @@ public class Game : MonoBehaviour
         SwitchPlayer();
     }
 
-    private void SwitchPlayer()
+    public void SwitchPlayer()
     {
         currentPlayer = currentPlayer == Player.Player1 ? Player.Player2 : Player.Player1;
 

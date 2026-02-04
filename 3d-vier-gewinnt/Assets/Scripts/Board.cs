@@ -1,6 +1,3 @@
-using System.Drawing;
-using UnityEngine;
-
 public class Board
 {
     public Player[,,] grid;
@@ -9,15 +6,15 @@ public class Board
     public Board()
     {
         grid = new Player[Size, Size, Size];
-
+        Clear();
     }
     public void Clear()
     {
-        for(int x = 0; x < Size; x++)
+        for (int x = 0; x < Size; x++)
         {
             for (int y = 0; y < Size; y++)
             {
-                for(int z = 0; z < Size; z++)
+                for (int z = 0; z < Size; z++)
                 {
                     grid[x, y, z] = Player.None;
                 }
@@ -65,7 +62,7 @@ public class Board
                         continue;
                     }
 
-                    for (int d = 0;  d < directions.GetLength(0); d++)
+                    for (int d = 0; d < directions.GetLength(0); d++)
                     {
                         if (HasFour(player, x, y, z,
                             directions[d, 0],
@@ -78,7 +75,7 @@ public class Board
         }
         return false;
     }
-    
+
     private bool HasFour(Player player, int x, int y, int z, int dx, int dy, int dz)
     {
         int count = 1;
