@@ -13,6 +13,8 @@ public class ClickSpawner : MonoBehaviour
     private float pieceHeight;
     private Dictionary<Transform, int> poleStacks = new Dictionary<Transform, int>();
 
+    public Game gameManager;
+
     void Start()
     {
         pieceHeight = GamePiecePlayer1.GetComponent<Collider>().bounds.size.y;
@@ -53,10 +55,19 @@ public class ClickSpawner : MonoBehaviour
 
         Vector3 spawnPos = poleTransform.position;
 
+        // Game - TryMakeMove(x, y, z) aufrufen
+        gameManager.TryMakeMove(x, y, z);
 
         spawnPos.y += spawnHeightOffset + stackCount * pieceHeight;
 
-        Instantiate(GamePiecePlayer1, spawnPos, Quaternion.identity);
+        if (gameManager.currentPlayer == Player.Player1)
+        {
+            Instantiate(GamePiecePlayer1, spawnPos, Quaternion.identity);
+        }
+        else
+        {
+            Instantiate(GamePiecePlayer2, spawnPos, Quaternion.identity);
+        }
 
         poleStacks[poleTransform]++;
 
@@ -64,6 +75,11 @@ public class ClickSpawner : MonoBehaviour
         {
             poleTransform.GetComponent<Collider>().enabled = false;
             return;
+        }
+
+        if (gameManager.board.CheckWin(gameManager.currentPlayer))
+        {
+            string s = "cool";
         }
 
     }

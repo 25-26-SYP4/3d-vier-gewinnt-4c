@@ -2,8 +2,8 @@ using UnityEngine;
 
 public class Game : MonoBehaviour
 {
-    private Board board;
-    private Player currentPlayer = Player.Player1;
+    public Board board;
+    public Player currentPlayer = Player.Player1;
 
     void Start()
     {
@@ -13,6 +13,7 @@ public class Game : MonoBehaviour
 
     public void TryMakeMove(int x, int y, int z)
     {
+        Debug.Log("TryMakeMove aufgerufen");
         bool success = board.PlacePiece(x, y, z, currentPlayer);
 
         if (!success)
@@ -26,12 +27,14 @@ public class Game : MonoBehaviour
         if (board.CheckWin(currentPlayer))
         {
             Debug.Log(currentPlayer + " hat gewonnen!");
+            enabled = false;
+            return;
         }
 
         SwitchPlayer();
     }
 
-    private void SwitchPlayer()
+    public void SwitchPlayer()
     {
         currentPlayer = currentPlayer == Player.Player1 ? Player.Player2 : Player.Player1;
 
