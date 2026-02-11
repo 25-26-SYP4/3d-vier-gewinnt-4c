@@ -78,11 +78,11 @@ public class ClickSpawner : MonoBehaviour
 
         if (gameManager.currentPlayer == Player.Player1)
         {
-            Instantiate(GamePiecePlayer1, spawnPos, Quaternion.identity);
+            
         }
         else
         {
-            Instantiate(GamePiecePlayer2, spawnPos, Quaternion.identity);
+            
         }
     }
 
