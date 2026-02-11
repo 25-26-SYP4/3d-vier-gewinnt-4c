@@ -55,9 +55,25 @@ public class ClickSpawner : MonoBehaviour
 
         Vector3 spawnPos = poleTransform.position;
 
+        if (!gameManager.gameOver)
+        {
+            SpawnGamePiece(spawnPos, stackCount);
+        }
+
         // Game - TryMakeMove(x, y, z) aufrufen
         gameManager.TryMakeMove(x, y, z);
 
+        poleStacks[poleTransform]++;
+
+        if (poleStacks[poleTransform] == 4)
+        {
+            poleTransform.GetComponent<Collider>().enabled = false;
+            return;
+        }
+    }
+
+    private void SpawnGamePiece(Vector3 spawnPos, int stackCount)
+    {
         spawnPos.y += spawnHeightOffset + stackCount * pieceHeight;
 
         if (gameManager.currentPlayer == Player.Player1)
@@ -68,20 +84,6 @@ public class ClickSpawner : MonoBehaviour
         {
             Instantiate(GamePiecePlayer2, spawnPos, Quaternion.identity);
         }
-
-        poleStacks[poleTransform]++;
-
-        if (poleStacks[poleTransform] == 4)
-        {
-            poleTransform.GetComponent<Collider>().enabled = false;
-            return;
-        }
-
-        if (gameManager.board.CheckWin(gameManager.currentPlayer))
-        {
-            string s = "cool";
-        }
-
     }
 
     Transform GetPoleFromHit(Transform hit)
