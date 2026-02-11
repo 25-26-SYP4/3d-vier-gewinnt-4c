@@ -1270,7 +1270,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: c22777d6e868e4f2fb421913386b154e, type: 2}
+  - {fileID: 2100000, guid: a9af463cbb9da0f438f89befe9c7e578, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -1292,6 +1292,7 @@ MeshRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
 --- !u!33 &6107026707256447321
 MeshFilter:
@@ -1336,5 +1337,3 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8e89a30e52e87ec4db4211d4823b38c4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Pole
-  x: 0
-  y: 0
