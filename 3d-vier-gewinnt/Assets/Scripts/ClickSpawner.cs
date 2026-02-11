@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -102,5 +103,22 @@ public class ClickSpawner : MonoBehaviour
         }
 
         return null;
+    }
+    public void ResetBoardVisuals()
+    {
+        StartCoroutine(ResetRoutine(5));
+    }
+    IEnumerator ResetRoutine(float delay)
+    {
+        Debug.Log("Gewinn! Brett wird gleich zurückgesetzt...");
+
+        yield return new WaitForSeconds(delay);
+
+        GameObject[] pieces = GameObject.FindGameObjectsWithTag("GamePiece");
+
+        foreach (GameObject go in pieces)
+            Destroy(go);
+
+        poleStacks.Clear();
     }
 }
