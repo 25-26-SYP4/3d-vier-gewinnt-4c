@@ -13,6 +13,7 @@ public class Game : MonoBehaviour
 
     public void TryMakeMove(int x, int y, int z)
     {
+        Debug.Log("TryMakeMove aufgerufen");
         bool success = board.PlacePiece(x, y, z, currentPlayer);
 
         if (!success)
@@ -26,6 +27,8 @@ public class Game : MonoBehaviour
         if (board.CheckWin(currentPlayer))
         {
             Debug.Log(currentPlayer + " hat gewonnen!");
+            enabled = false;
+            return;
         }
 
         SwitchPlayer();
