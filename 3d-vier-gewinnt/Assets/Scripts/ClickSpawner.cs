@@ -76,13 +76,16 @@ public class ClickSpawner : MonoBehaviour
     {
         spawnPos.y += spawnHeightOffset + stackCount * pieceHeight;
 
+
+        GameObject newPiece;
+
         if (gameManager.currentPlayer == Player.Player1)
         {
-            Instantiate(GamePiecePlayer1, spawnPos, Quaternion.identity);
+            newPiece = Instantiate(GamePiecePlayer1, spawnPos, Quaternion.identity);
         }
         else
         {
-            Instantiate(GamePiecePlayer2, spawnPos, Quaternion.identity);
+            newPiece = Instantiate(GamePiecePlayer2, spawnPos, Quaternion.identity);
         }
     }
 
