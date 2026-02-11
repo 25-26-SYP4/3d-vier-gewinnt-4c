@@ -85,7 +85,7 @@ public class ClickSpawner : MonoBehaviour
         }
         else
         {
-            newPiece = Instantiate(GamePiecePlayer2, spawnPos, Quaternion.identity);
+            newPiece = Instantiate(GamePiecePlayer2, spawnPos, Quaternion.identity);            
         }
     }
 
