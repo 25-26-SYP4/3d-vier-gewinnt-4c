@@ -27,6 +27,9 @@ public class Game : MonoBehaviour
         if (board.CheckWin(currentPlayer))
         {
             Debug.Log(currentPlayer + " hat gewonnen!");
+            board.Clear();
+
+            FindFirstObjectByType<ClickSpawner>().ResetBoardVisuals();
             enabled = false;
             return;
         }
