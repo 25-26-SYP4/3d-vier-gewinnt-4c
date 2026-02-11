@@ -5,6 +5,8 @@ public class Game : MonoBehaviour
     public Board board;
     public Player currentPlayer = Player.Player1;
 
+    public bool gameOver = false;
+
     void Start()
     {
         board = new Board();
@@ -13,12 +15,14 @@ public class Game : MonoBehaviour
 
     public void TryMakeMove(int x, int y, int z)
     {
+        if (gameOver) return;
+        
         Debug.Log("TryMakeMove aufgerufen");
         bool success = board.PlacePiece(x, y, z, currentPlayer);
 
         if (!success)
         {
-            Debug.Log("Ungültiger Spielzug!");
+            Debug.Log("Ungï¿½ltiger Spielzug!");
             return;
         }
 
@@ -28,6 +32,7 @@ public class Game : MonoBehaviour
         {
             Debug.Log(currentPlayer + " hat gewonnen!");
             enabled = false;
+            gameOver = true;
             return;
         }
 
