@@ -46,6 +46,12 @@ public class ClickSpawner : MonoBehaviour
         if (!poleStacks.ContainsKey(poleTransform))
             poleStacks[poleTransform] = 0;
 
+        if(poleStacks[poleTransform] >= 4)
+        {
+            return;
+        }
+
+
         Vector2Int index = poleManager.GetIndex(pole);
 
         int stackCount = poleStacks[poleTransform];
@@ -61,7 +67,6 @@ public class ClickSpawner : MonoBehaviour
             SpawnGamePiece(spawnPos, stackCount, poleTransform);
         }
 
-        // Game - TryMakeMove(x, y, z) aufrufen
         gameManager.TryMakeMove(x, y, z);
 
         poleStacks[poleTransform]++;
