@@ -1,5 +1,6 @@
 using TMPro;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class Game : MonoBehaviour
@@ -12,6 +13,9 @@ public class Game : MonoBehaviour
     public TextMeshProUGUI player1Text;
     public TextMeshProUGUI player2Text;
     public bool gameOver = false;
+
+    public GameObject endScreen;
+    public TextMeshProUGUI playerWonText;
 
     void Start()
     {
@@ -28,7 +32,7 @@ public class Game : MonoBehaviour
 
         if (!success)
         {
-            Debug.Log("Ung�ltiger Spielzug!");
+            Debug.Log("Ungültiger Spielzug!");
             return;
         }
 
@@ -38,8 +42,7 @@ public class Game : MonoBehaviour
         {
             Debug.Log(currentPlayer + " hat gewonnen!");
             board.Clear();
-
-            FindFirstObjectByType<ClickSpawner>().ResetBoardVisuals();
+            
             enabled = false;
             gameOver = true;
             return;
@@ -81,5 +84,18 @@ public class Game : MonoBehaviour
             text.color = Color.gray;
             panel.transform.localScale = Vector3.one;
         }
+    }
+
+    public void ShowEndScreen()
+    {
+        endScreen.SetActive(true);
+        playerWonText.text = $"{(currentPlayer == Player.Player1 ? "Player 1" : "Player 2")} won";
+    }
+
+    public void ResetGame()
+    {
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+        Object.FindFirstObjectByType<ClickSpawner>().ResetPolesIsFull();
+        board = new Board();
     }
 }

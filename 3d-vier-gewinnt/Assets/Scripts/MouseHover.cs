@@ -17,6 +17,14 @@ public class MouseHover : MonoBehaviour
 
             if (pole != null)
             {
+                Pole poleHover = pole.GetComponent<Pole>();
+
+                if (poleHover != null && poleHover.isFull)
+                {
+                    ClearLast();
+                    return;
+                }
+                
                 Renderer rend = pole.GetComponent<Renderer>();
 
                 if (rend != null && rend != lastRenderer)

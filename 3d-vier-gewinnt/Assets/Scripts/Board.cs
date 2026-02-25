@@ -1,3 +1,5 @@
+using UnityEngine;
+
 public class Board
 {
     public Player[,,] grid;
@@ -68,10 +70,13 @@ public class Board
                     for (int d = 0; d < directions.GetLength(0); d++)
                     {
                         if (HasFour(player, x, y, z,
-                            directions[d, 0],
-                            directions[d, 1],
-                            directions[d, 2]))
+                                directions[d, 0],
+                                directions[d, 1],
+                                directions[d, 2]))
+                        {
+                            Object.FindFirstObjectByType<Game>().ShowEndScreen();
                             return true;
+                        }
                     }
                 }
             }

@@ -72,8 +72,7 @@ public class ClickSpawner : MonoBehaviour
 
         if (poleStacks[poleTransform] == 4)
         {
-            poleTransform.GetComponent<Collider>().enabled = false;
-            return;
+            poleTransform.GetComponent<Pole>().isFull = true;
         }
     }
 
@@ -108,21 +107,18 @@ public class ClickSpawner : MonoBehaviour
 
         return null;
     }
-    public void ResetBoardVisuals()
+    
+    public void ResetPolesIsFull()
     {
-        StartCoroutine(ResetRoutine(5));
-    }
-    IEnumerator ResetRoutine(float delay)
-    {
-        Debug.Log("Gewinn! Brett wird gleich zurückgesetzt...");
+        GameObject[] poles = GameObject.FindGameObjectsWithTag("Pole");
 
-        yield return new WaitForSeconds(delay);
-
-        GameObject[] pieces = GameObject.FindGameObjectsWithTag("GamePiece");
-
-        foreach (GameObject go in pieces)
-            Destroy(go);
-
-        poleStacks.Clear();
+        foreach (GameObject poleObj in poles)
+        {
+            Pole pole = poleObj.GetComponent<Pole>();
+            if (pole != null)
+            {
+                pole.isFull = false;
+            }
+        }
     }
 }
