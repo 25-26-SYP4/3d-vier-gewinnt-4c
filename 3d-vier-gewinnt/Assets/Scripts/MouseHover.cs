@@ -3,8 +3,10 @@ using UnityEngine;
 public class MouseHover : MonoBehaviour
 {
     public Color hoverColor = Color.yellow;
+
     private Renderer lastRenderer;
     private Color lastColor;
+
     void Update()
     {
         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
@@ -13,18 +15,9 @@ public class MouseHover : MonoBehaviour
         {
             Transform pole = GetPoleFromHit(hit.transform);
 
-
             if (pole != null)
             {
-                Pole poleHover = pole.GetComponent<Pole>();
-
-                if (poleHover != null && poleHover.isFull)
-                {
-                    ClearLast();
-                    return;
-                }
-
-                    Renderer rend = pole.GetComponent<Renderer>();
+                Renderer rend = pole.GetComponent<Renderer>();
 
                 if (rend != null && rend != lastRenderer)
                 {
