@@ -51,7 +51,6 @@ public class ClickSpawner : MonoBehaviour
             return;
         }
 
-
         Vector2Int index = poleManager.GetIndex(pole);
 
         int stackCount = poleStacks[poleTransform];
