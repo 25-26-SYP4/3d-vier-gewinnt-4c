@@ -12,7 +12,7 @@ public class ClickSpawner : MonoBehaviour
     public PoleManager poleManager;
 
     private float pieceHeight;
-    private Dictionary<Transform, int> poleStacks = new Dictionary<Transform, int>();
+    public Dictionary<Transform, int> poleStacks = new Dictionary<Transform, int>();
 
     public Game gameManager;
 
@@ -46,6 +46,11 @@ public class ClickSpawner : MonoBehaviour
         if (!poleStacks.ContainsKey(poleTransform))
             poleStacks[poleTransform] = 0;
 
+        if(poleStacks[poleTransform] >= 4)
+        {
+            return;
+        }
+
         Vector2Int index = poleManager.GetIndex(pole);
 
         int stackCount = poleStacks[poleTransform];
@@ -68,8 +73,7 @@ public class ClickSpawner : MonoBehaviour
 
         if (poleStacks[poleTransform] == 4)
         {
-            poleTransform.GetComponent<Collider>().enabled = false;
-            return;
+            poleTransform.GetComponent<Pole>().isFull = true;
         }
     }
 
@@ -108,6 +112,7 @@ public class ClickSpawner : MonoBehaviour
     {
         StartCoroutine(ResetRoutine(5));
     }
+
     IEnumerator ResetRoutine(float delay)
     {
         Debug.Log("Gewinn! Brett wird gleich zurückgesetzt...");
@@ -120,5 +125,21 @@ public class ClickSpawner : MonoBehaviour
             Destroy(go);
 
         poleStacks.Clear();
+
+        ResetPolesIsFull();
+    }
+
+    public void ResetPolesIsFull()
+    {
+        GameObject[] poles = GameObject.FindGameObjectsWithTag("Pole");
+
+        foreach (GameObject poleObj in poles)
+        {
+            Pole pole = poleObj.GetComponent<Pole>();
+            if (pole != null)
+            {
+                pole.isFull = false;
+            }
+        }
     }
 }
