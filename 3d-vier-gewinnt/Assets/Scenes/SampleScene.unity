@@ -2693,6 +2693,50 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8e89a30e52e87ec4db4211d4823b38c4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Pole
+--- !u!1 &776516340
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 776516342}
+  - component: {fileID: 776516341}
+  m_Layer: 0
+  m_Name: USBPioManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &776516341
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 776516340}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5645996356949d4cbdec45e95f35a7e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::USBPIOController
+--- !u!4 &776516342
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 776516340}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0.02855, y: -0, z: 4.75477}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!43 &790775318
 Mesh:
   m_ObjectHideFlags: 0
@@ -8511,6 +8555,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 1920824894}
     - target: {fileID: 8650730696634647697, guid: 02c53802aaf0346209b1eedc8252e819, type: 3}
+      propertyPath: usbController
+      value: 
+      objectReference: {fileID: 776516341}
+    - target: {fileID: 8650730696634647697, guid: 02c53802aaf0346209b1eedc8252e819, type: 3}
       propertyPath: currentPlayerText
       value: 
       objectReference: {fileID: 0}
@@ -8529,3 +8577,4 @@ SceneRoots:
   - {fileID: 740564172323315913}
   - {fileID: 4602419902381493326}
   - {fileID: 273491375}
+  - {fileID: 776516342}

@@ -24,7 +24,7 @@ public class MouseHover : MonoBehaviour
                     ClearLast();
                     return;
                 }
-                
+
                 Renderer rend = pole.GetComponent<Renderer>();
 
                 if (rend != null && rend != lastRenderer)

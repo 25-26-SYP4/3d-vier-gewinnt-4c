@@ -7,6 +7,7 @@ public class Game : MonoBehaviour
 {
     public Board board;
     public Player currentPlayer = Player.Player1;
+    public USBPIOController usbController;
     public Image player1Panel;
     public Image player2Panel;
 
@@ -29,6 +30,11 @@ public class Game : MonoBehaviour
 
         Debug.Log("TryMakeMove aufgerufen");
         bool success = board.PlacePiece(x, y, z, currentPlayer);
+        if (success)
+        {
+            int columnNumber = x + y * 4 + 1;
+            usbController.SendColumn(columnNumber);
+        }
 
         if (!success)
         {
