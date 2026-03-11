@@ -15,6 +15,8 @@ public class ClickSpawner : MonoBehaviour
     private Dictionary<Transform, int> poleStacks = new Dictionary<Transform, int>();
 
     public Game gameManager;
+    
+    public Dictionary<Vector3Int, GameObject> spawnedPieces = new Dictionary<Vector3Int, GameObject>();
 
     void Start()
     {
@@ -60,13 +62,16 @@ public class ClickSpawner : MonoBehaviour
         int z = stackCount;
 
         Vector3 spawnPos = poleTransform.position;
+        
+        bool success = gameManager.TryMakeMove(x, y, z);
 
-        if (!gameManager.gameOver)
+        if (!success)
         {
-            SpawnGamePiece(spawnPos, stackCount, poleTransform);
+            return;
         }
-
-        gameManager.TryMakeMove(x, y, z);
+        
+        SpawnGamePiece(spawnPos, stackCount, poleTransform, x, y, z);
+        gameManager.SwitchPlayer();
 
         poleStacks[poleTransform]++;
 
@@ -76,11 +81,10 @@ public class ClickSpawner : MonoBehaviour
         }
     }
 
-    private void SpawnGamePiece(Vector3 spawnPos, int stackCount, Transform poleTransform)
+    private void SpawnGamePiece(Vector3 spawnPos, int stackCount, Transform poleTransform, int x, int y, int z)
     {
         spawnPos.y += spawnHeightOffset + stackCount * pieceHeight;
-
-
+        
         GameObject newPiece;
 
         if (gameManager.currentPlayer == Player.Player1)
@@ -93,6 +97,8 @@ public class ClickSpawner : MonoBehaviour
         }
 
         newPiece.transform.SetParent(poleTransform);
+        
+        spawnedPieces[new Vector3Int(x, y, z)] = newPiece;
     }
 
     Transform GetPoleFromHit(Transform hit)
