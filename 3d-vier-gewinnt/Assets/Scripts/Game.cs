@@ -30,11 +30,6 @@ public class Game : MonoBehaviour
 
         Debug.Log("TryMakeMove aufgerufen");
         bool success = board.PlacePiece(x, y, z, currentPlayer);
-        if (success)
-        {
-            int columnNumber = x + y * 4 + 1;
-            usbController.SendColumn(columnNumber);
-        }
 
         if (!success)
         {
