@@ -13,7 +13,7 @@ namespace _3D_Vier_Gewinnt_Server
         {
             if (usb.Open("USB-PIO"))
             {
-                Console.WriteLine("USB-Interface opened");
+                Console.WriteLine("USB-Interface opened succesfully");
             }
         }
     }
