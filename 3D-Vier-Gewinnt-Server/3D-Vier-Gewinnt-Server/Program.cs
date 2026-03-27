@@ -125,6 +125,6 @@ namespace _3D_Vier_Gewinnt_Server
                 usbInterface.DigitalOutLine[cGroupA, i] = false;
                 usbInterface.DigitalOutLine[cGroupB, i] = false;
             }
-        }+
+        }
     }
 }
