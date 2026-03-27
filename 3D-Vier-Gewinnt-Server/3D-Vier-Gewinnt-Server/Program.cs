@@ -1,4 +1,8 @@
 ﻿using System;
+using System.Net;
+using System.Net.Sockets;
+using System.Text;
+using System.Threading;
 
 namespace _3D_Vier_Gewinnt_Server
 {
@@ -14,85 +18,106 @@ namespace _3D_Vier_Gewinnt_Server
         {
             usbInterface = new LIBADX.LIBADX();
 
-            // 1. Verbindung öffnen (Hier den Namen deines USB-PIO eintragen, z.B. "USB-PIO_1")
-            // In einer Konsolen-App musst du den Namen kennen oder vorher abfragen
             string deviceName = "USB-PIO";
 
-            if (usbInterface.Open(deviceName))
+            if (!usbInterface.Open(deviceName))
             {
-                // Port-Richtung setzen (0 = Output)
-                usbInterface.DigitalDirection[1] = 0x0000;
-
-                Console.WriteLine("Testlauf: LED an Pin 16 sollte jetzt blinken...");
-
-                while (true)
-                {
-                    // Schalte Leitung 0 in Gruppe 1 (Pin 16) an
-                    usbInterface.DigitalOutLine[1,0] = true;
-                    System.Threading.Thread.Sleep(500);
-
-                    // Und wieder aus
-                    usbInterface.DigitalOutLine[1, 0] = false;
-                    System.Threading.Thread.Sleep(500);
-                }
-            } 
-            else
-            {
-                Console.WriteLine("Fehler: Interface konnte nicht geöffnet werden.");
+                Console.WriteLine("❌ USB-PIO konnte nicht geöffnet werden!");
+                return;
             }
 
-            Console.WriteLine("Programm beendet. Taste drücken...");
-            Console.ReadKey();
+            Console.WriteLine("✅ USB-PIO verbunden!");
+
+            // 👉 GANZ WICHTIG: Richtung setzen
+            usbInterface.DigitalDirection[1] = 0x0000; // Gruppe A
+            usbInterface.DigitalDirection[2] = 0x0000; // Gruppe B
+
+            // 👉 Server starten
+            StartServer();
+
         }
-
-        static void RunSimulation()
+        static void StartServer()
         {
-            bool exit = false;
-            while (!exit)
+            TcpListener server = new TcpListener(IPAddress.Any, 5000);
+            server.Start();
+
+            Console.WriteLine("Server läuft auf Port 5000...");
+
+            while (true)
             {
-                Console.Clear();
-                Console.WriteLine("--- Roboter Simulation (Steckbrett) ---");
-                Console.WriteLine("1: Befehlszähler 1 setzen (A/0)");
-                Console.WriteLine("2: Ablage 1 aktivieren (B/0)");
-                Console.WriteLine("3: Ablage 2 aktivieren (B/1)");
-                Console.WriteLine("4: Entnahme Pos 1 (B/4)");
-                Console.WriteLine("0: Alles AUS & Beenden");
+                Console.WriteLine("Warte auf Verbindung...");
+                TcpClient client = server.AcceptTcpClient();
 
-                var key = Console.ReadKey().Key;
+                Console.WriteLine("Client verbunden!");
 
-                switch (key)
-                {
-                    case ConsoleKey.D1:
-                        SetSignal(cGroupA, 0, "Befehlszähler 1");
-                        break;
-                    case ConsoleKey.D2:
-                        SetSignal(cGroupB, 0, "Ablage 1");
-                        break;
-                    case ConsoleKey.D3:
-                        SetSignal(cGroupB, 1, "Ablage 2");
-                        break;
-                    case ConsoleKey.D4:
-                        SetSignal(cGroupB, 4, "Entnahme Pos 1");
-                        break;
-                    case ConsoleKey.D0:
-                        ResetAll();
-                        exit = true;
-                        break;
-                }
+                Thread clientThread = new Thread(() => HandleClient(client));
+                clientThread.Start();
             }
         }
-
-        // Hilfsmethode zum Toggeln einer LED
-        static void SetSignal(int group, int line, string label)
+        static void HandleClient(TcpClient client)
         {
-            // Aktuellen Status lesen und umkehren
-            bool currentState = usbInterface.DigitalOutLine[group, line];
-            usbInterface.DigitalOutLine[group, line] = !currentState;
+            NetworkStream stream = client.GetStream();
+            byte[] buffer = new byte[1024];
 
-            Console.WriteLine($"\n{label} ist nun: " + (!currentState ? "AN" : "AUS"));
-            System.Threading.Thread.Sleep(500); // Kleiner Delay für die Anzeige
+            while (true)
+            {
+                int bytesRead;
+
+                try
+                {
+                    bytesRead = stream.Read(buffer, 0, buffer.Length);
+                    if (bytesRead == 0) break;
+                }
+                catch
+                {
+                    break;
+                }
+
+                string message = Encoding.UTF8.GetString(buffer, 0, bytesRead);
+                Console.WriteLine("Empfangen: " + message);
+
+                ProcessMessage(message);
+            }
+
+            client.Close();
+            Console.WriteLine("Client getrennt");
         }
+        static void ProcessMessage(string message)
+        {
+            try
+            {
+                string[] parts = message.Split(',');
 
+                int x = int.Parse(parts[0]);
+                int y = int.Parse(parts[1]);
+                int z = int.Parse(parts[2]);
+
+                Console.WriteLine($"X:{x} Y:{y} Z:{z}");
+
+                SendToHardware(x, y, z);
+            }
+            catch
+            {
+                Console.WriteLine("Fehler beim Parsen!");
+            }
+        }
+        static void SendToHardware(int x, int y, int z)
+        {
+            ResetAll();
+
+            usbInterface.DigitalOutLine[2, 6] = true; // Versorgung
+
+            SetBinary(2, x); // Gruppe B
+            SetBinary(1, y); // Gruppe A
+        }
+        static void SetBinary(int group, int value)
+        {
+            for (int i = 0; i < 4; i++)
+            {
+                bool bit = (value & (1 << i)) != 0;
+                usbInterface.DigitalOutLine[group, i] = bit;
+            }
+        }
         static void ResetAll()
         {
             for (int i = 0; i < 8; i++)
@@ -100,6 +125,6 @@ namespace _3D_Vier_Gewinnt_Server
                 usbInterface.DigitalOutLine[cGroupA, i] = false;
                 usbInterface.DigitalOutLine[cGroupB, i] = false;
             }
-        }
+        }+
     }
 }
