@@ -1,3 +1,4 @@
+using System.Net.Sockets;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -17,10 +18,14 @@ public class Game : MonoBehaviour
     public GameObject endScreen;
     public TextMeshProUGUI playerWonText;
 
+    public SocketClient socket;
+
     void Start()
     {
         board = new Board();
         UpdatePlayerUI();
+        socket = new SocketClient();
+        socket.Connect();
     }
 
     public void TryMakeMove(int x, int y, int z)
@@ -35,6 +40,8 @@ public class Game : MonoBehaviour
             Debug.Log("Ungültiger Spielzug!");
             return;
         }
+
+        socket.Send(x, y, z);
 
         Debug.Log($"Spielzug: {currentPlayer} -> {x},{y},{z}");
 
