@@ -155,7 +155,7 @@ MonoBehaviour:
   spawnHeightOffset: 4
   poleManager: {fileID: 1326472246}
   gameManager: {fileID: 1360205197}
-  messageGroup: {fileID: 0}
+  messageGroup: {fileID: 1786198693}
   messageText: {fileID: 1253712062}
 --- !u!43 &80520231
 Mesh:
@@ -6109,6 +6109,7 @@ GameObject:
   - component: {fileID: 1786198690}
   - component: {fileID: 1786198692}
   - component: {fileID: 1786198691}
+  - component: {fileID: 1786198693}
   m_Layer: 0
   m_Name: MessagePanel
   m_TagString: Untagged
@@ -6174,6 +6175,18 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1786198689}
   m_CullTransparentMesh: 1
+--- !u!225 &1786198693
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1786198689}
+  m_Enabled: 1
+  m_Alpha: 0
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!43 &1800096173
 Mesh:
   m_ObjectHideFlags: 0
