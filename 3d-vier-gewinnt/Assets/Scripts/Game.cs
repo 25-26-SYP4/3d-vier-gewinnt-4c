@@ -102,12 +102,23 @@ public class Game : MonoBehaviour
 
     public void HighlightWinningPieces()
     {
+        clickSpawner = Object.FindFirstObjectByType<ClickSpawner>();
+
+        if (clickSpawner == null) return;
+        
         foreach (Vector3Int pos in board.winningPositions)
         {
             if (clickSpawner.spawnedPieces.TryGetValue(pos, out GameObject piece))
             {
-                Renderer r = piece.GetComponent<Renderer>();
-                r.material.color = new Color(1f, 0.84f, 0f);
+                if (piece != null)
+                {
+                    Renderer r = piece.GetComponent<Renderer>();
+                    if (r != null)
+                    {
+                        Renderer renderer = piece.GetComponent<Renderer>();
+                        renderer.material.color = new Color(1f, 0.84f, 0f);
+                    }
+                }
             }
         }
     }

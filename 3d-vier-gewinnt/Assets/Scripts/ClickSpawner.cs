@@ -22,6 +22,12 @@ public class ClickSpawner : MonoBehaviour
     public CanvasGroup messageGroup;
     public TextMeshProUGUI messageText;
 
+    private void Awake()
+    {
+        spawnedPieces = new Dictionary<Vector3Int, GameObject>();
+        poleStacks = new Dictionary<Transform, int>();
+    }
+
     void Start()
     {
         pieceHeight = GamePiecePlayer1.GetComponent<Collider>().bounds.size.y;
@@ -47,6 +53,8 @@ public class ClickSpawner : MonoBehaviour
 
     void SpawnPieceOnPole(Transform poleTransform)
     {
+        if (gameManager.gameOver) return;
+        
         Pole pole = poleTransform.GetComponent<Pole>();
 
         if (!poleStacks.ContainsKey(poleTransform))
@@ -71,20 +79,22 @@ public class ClickSpawner : MonoBehaviour
         GameObject newPiece = SpawnGamePiece(spawnPos, stackCount, poleTransform, x, y, z);
         bool success = gameManager.TryMakeMove(x, y, z);
 
-        if (!success)
+        if (!success && !gameManager.gameOver)
         {
+            spawnedPieces.Remove(new Vector3Int(index.x, index.y, stackCount));
             Destroy(newPiece);
             return;
         }
         
-        //SpawnGamePiece(spawnPos, stackCount, poleTransform, x, y, z);
-        gameManager.SwitchPlayer();
-
-        poleStacks[poleTransform]++;
-
-        if (poleStacks[poleTransform] == 4)
+        if (success || gameManager.gameOver)
         {
-            poleTransform.GetComponent<Pole>().isFull = true;
+            gameManager.SwitchPlayer();
+            poleStacks[poleTransform]++;
+
+            if (poleStacks[poleTransform] == 4)
+            {
+                poleTransform.GetComponent<Pole>().isFull = true;
+            }
         }
     }
 

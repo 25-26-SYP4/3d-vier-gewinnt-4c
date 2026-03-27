@@ -1,11 +1,21 @@
+using System;
 using UnityEngine;
 
 public class MouseHover : MonoBehaviour
 {
-    public Color hoverColor = Color.yellow;
+    public Color hoverColor = Color.black;
 
     private Renderer lastRenderer;
-    private Color lastColor;
+    private Color originColor;
+
+    private void Start()
+    {
+        Renderer startRend = GetComponentInChildren<Renderer>();
+        if (startRend != null)
+        {
+            originColor = startRend.sharedMaterial.color;
+        }
+    }
 
     void Update()
     {
@@ -18,24 +28,17 @@ public class MouseHover : MonoBehaviour
             if (pole != null)
             {
                 Pole poleHover = pole.GetComponent<Pole>();
-
-                if (poleHover != null && poleHover.isFull)
-                {
-                    ClearLast();
-                    return;
-                }
-                
                 Renderer rend = pole.GetComponent<Renderer>();
 
-                if (rend != null && rend != lastRenderer)
+                if (rend != lastRenderer || (poleHover != null && poleHover.isFull))
                 {
                     ClearLast();
+                }
 
+                if (poleHover != null && !poleHover.isFull && rend != lastRenderer)
+                {
                     lastRenderer = rend;
-                    lastColor = rend.material.color;
-
-                    rend.material = new Material(rend.material);
-                    rend.material.color = hoverColor;
+                    lastRenderer.material.color = hoverColor;
                 }
                 return;
             }
@@ -61,7 +64,7 @@ public class MouseHover : MonoBehaviour
     {
         if (lastRenderer != null)
         {
-            lastRenderer.material.color = lastColor;
+            lastRenderer.material.color = originColor;
             lastRenderer = null;
         }
     }
