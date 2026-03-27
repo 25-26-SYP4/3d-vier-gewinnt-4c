@@ -119,17 +119,6 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
---- !u!114 &47415046 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 5470190793500389005, guid: 9b8bc466fe5fe428fbee48014806e353, type: 3}
-  m_PrefabInstance: {fileID: 2986958898324820564}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 65e7ffdd7ea04424d80bc48f340731c5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ClickSpawner
 --- !u!1 &65801968 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 7813750181107624539, guid: 0d47ae7e53ea9ef41aba07b82b744df5, type: 3}
@@ -7819,75 +7808,6 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 119f350d450fde24eba7443e9436218a, type: 3}
---- !u!1001 &2986958898324820564
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 0}
-    m_Modifications:
-    - target: {fileID: 4923011563976438595, guid: 9b8bc466fe5fe428fbee48014806e353, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 0.35714
-      objectReference: {fileID: 0}
-    - target: {fileID: 4923011563976438595, guid: 9b8bc466fe5fe428fbee48014806e353, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 0.25
-      objectReference: {fileID: 0}
-    - target: {fileID: 4923011563976438595, guid: 9b8bc466fe5fe428fbee48014806e353, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 0.35714
-      objectReference: {fileID: 0}
-    - target: {fileID: 4923011563976438595, guid: 9b8bc466fe5fe428fbee48014806e353, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 4923011563976438595, guid: 9b8bc466fe5fe428fbee48014806e353, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4923011563976438595, guid: 9b8bc466fe5fe428fbee48014806e353, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4923011563976438595, guid: 9b8bc466fe5fe428fbee48014806e353, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4923011563976438595, guid: 9b8bc466fe5fe428fbee48014806e353, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4923011563976438595, guid: 9b8bc466fe5fe428fbee48014806e353, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4923011563976438595, guid: 9b8bc466fe5fe428fbee48014806e353, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5185174749787755607, guid: 9b8bc466fe5fe428fbee48014806e353, type: 3}
-      propertyPath: m_Name
-      value: ClickSpawnerManager
-      objectReference: {fileID: 0}
-    - target: {fileID: 5470190793500389005, guid: 9b8bc466fe5fe428fbee48014806e353, type: 3}
-      propertyPath: Camera
-      value: 
-      objectReference: {fileID: 675657394}
-    - target: {fileID: 5470190793500389005, guid: 9b8bc466fe5fe428fbee48014806e353, type: 3}
-      propertyPath: gameManager
-      value: 
-      objectReference: {fileID: 1360205197}
-    - target: {fileID: 5470190793500389005, guid: 9b8bc466fe5fe428fbee48014806e353, type: 3}
-      propertyPath: poleManager
-      value: 
-      objectReference: {fileID: 1326472246}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: 9b8bc466fe5fe428fbee48014806e353, type: 3}
 --- !u!1001 &3017759073178002783
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -8579,10 +8499,6 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 666351854}
     - target: {fileID: 8650730696634647697, guid: 02c53802aaf0346209b1eedc8252e819, type: 3}
-      propertyPath: clickSpawner
-      value: 
-      objectReference: {fileID: 47415046}
-    - target: {fileID: 8650730696634647697, guid: 02c53802aaf0346209b1eedc8252e819, type: 3}
       propertyPath: player1Panel
       value: 
       objectReference: {fileID: 1163450693}
@@ -8612,5 +8528,4 @@ SceneRoots:
   - {fileID: 3017759073178002783}
   - {fileID: 740564172323315913}
   - {fileID: 4602419902381493326}
-  - {fileID: 2986958898324820564}
   - {fileID: 273491375}

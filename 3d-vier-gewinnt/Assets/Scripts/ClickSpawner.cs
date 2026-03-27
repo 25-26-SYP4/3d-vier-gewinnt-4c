@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using TMPro;
 
 public class ClickSpawner : MonoBehaviour
 {
@@ -17,6 +18,9 @@ public class ClickSpawner : MonoBehaviour
     public Game gameManager;
     
     public Dictionary<Vector3Int, GameObject> spawnedPieces = new Dictionary<Vector3Int, GameObject>();
+
+    public CanvasGroup messageGroup;
+    public TextMeshProUGUI messageText;
 
     void Start()
     {
@@ -50,6 +54,7 @@ public class ClickSpawner : MonoBehaviour
 
         if(poleStacks[poleTransform] >= 4)
         {
+            ShowMessage("Stab ist voll!");
             return;
         }
 
@@ -129,5 +134,18 @@ public class ClickSpawner : MonoBehaviour
                 pole.isFull = false;
             }
         }
+    }
+    public void ShowMessage(string message)
+    {
+        messageText.text = message;
+        messageGroup.alpha = 1f;
+
+        CancelInvoke();
+        Invoke(nameof(HideMessage), 2f);
+    }
+
+    void HideMessage()
+    {
+        messageGroup.alpha = 0f;
     }
 }
