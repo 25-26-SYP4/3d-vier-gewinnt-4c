@@ -44,3 +44,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 68e68d7335ee4f54e9efc1b01928f427, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Game
+  currentPlayer: 1
+  player1Panel: {fileID: 0}
+  player2Panel: {fileID: 0}
+  player1Text: {fileID: 0}
+  player2Text: {fileID: 0}
+  gameOver: 0
+  endScreen: {fileID: 0}
+  playerWonText: {fileID: 0}
