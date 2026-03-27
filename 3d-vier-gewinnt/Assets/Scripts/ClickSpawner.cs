@@ -63,14 +63,16 @@ public class ClickSpawner : MonoBehaviour
 
         Vector3 spawnPos = poleTransform.position;
         
+        GameObject newPiece = SpawnGamePiece(spawnPos, stackCount, poleTransform, x, y, z);
         bool success = gameManager.TryMakeMove(x, y, z);
 
         if (!success)
         {
+            Destroy(newPiece);
             return;
         }
         
-        SpawnGamePiece(spawnPos, stackCount, poleTransform, x, y, z);
+        //SpawnGamePiece(spawnPos, stackCount, poleTransform, x, y, z);
         gameManager.SwitchPlayer();
 
         poleStacks[poleTransform]++;
@@ -81,7 +83,7 @@ public class ClickSpawner : MonoBehaviour
         }
     }
 
-    private void SpawnGamePiece(Vector3 spawnPos, int stackCount, Transform poleTransform, int x, int y, int z)
+    private GameObject SpawnGamePiece(Vector3 spawnPos, int stackCount, Transform poleTransform, int x, int y, int z)
     {
         spawnPos.y += spawnHeightOffset + stackCount * pieceHeight;
         
@@ -99,6 +101,7 @@ public class ClickSpawner : MonoBehaviour
         newPiece.transform.SetParent(poleTransform);
         
         spawnedPieces[new Vector3Int(x, y, z)] = newPiece;
+        return newPiece;
     }
 
     Transform GetPoleFromHit(Transform hit)

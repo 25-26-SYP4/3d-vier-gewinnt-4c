@@ -88,8 +88,6 @@ public class Board
 
     private bool HasFour(Player player, int x, int y, int z, int dx, int dy, int dz)
     {
-        int count = 1;
-        
         Vector3Int[] tempPositions = new Vector3Int[4];
         tempPositions[0] = new Vector3Int(x, y, z);
 

@@ -44,13 +44,9 @@ public class Game : MonoBehaviour
         if (board.CheckWin(currentPlayer))
         {
             Debug.Log(currentPlayer + " hat gewonnen!");
-            
-            ShowEndScreen();
-            
-            board.Clear();
-            
             gameOver = true;
             HighlightWinningPieces();
+            ShowEndScreen();
         }
 
         return true;
