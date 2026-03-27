@@ -5,6 +5,8 @@ public class Board
     public Player[,,] grid;
     public const int Size = 4;
 
+    public Vector3Int[] winningPositions = new Vector3Int[4];
+
     public Board()
     {
         grid = new Player[Size, Size, Size];
@@ -86,17 +88,29 @@ public class Board
 
     private bool HasFour(Player player, int x, int y, int z, int dx, int dy, int dz)
     {
-        int count = 1;
+        Vector3Int[] tempPositions = new Vector3Int[4];
+        tempPositions[0] = new Vector3Int(x, y, z);
 
-        count += CountDirection(player, x, y, z, dx, dy, dz);
-        count += CountDirection(player, x, y, z, -dx, -dy, -dz);
+        int index = 1;
 
-        return count >= 4;
+        index = CountDirection(player, x, y, z, dx, dy, dz, tempPositions, index);;
+        index = CountDirection(player, x, y, z, -dx, -dy, -dz, tempPositions, index);
+
+        if (index >= 4)
+        {
+            for (int i = 0; i < 4; i++)
+            {
+                winningPositions[i] = tempPositions[i];
+            }
+
+            return true;
+        }
+
+        return false;
     }
 
-    private int CountDirection(Player player, int x, int y, int z, int dx, int dy, int dz)
+    private int CountDirection(Player player, int x, int y, int z, int dx, int dy, int dz, Vector3Int[] positions, int index)
     {
-        int c = 0;
         for (int i = 1; i < Size; i++)
         {
             int nx = x + dx * i;
@@ -110,9 +124,13 @@ public class Board
             if (grid[nx, ny, nz] != player)
                 break;
 
-            c++;
+            if (index < 4)
+            {
+                positions[index] = new Vector3Int(nx, ny, nz);
+                index++;
+            }
         }
-        return c;
+        return index;
     }
 
 }

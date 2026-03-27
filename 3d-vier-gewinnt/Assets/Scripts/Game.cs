@@ -1,3 +1,4 @@
+using PlasticGui;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -16,6 +17,8 @@ public class Game : MonoBehaviour
 
     public GameObject endScreen;
     public TextMeshProUGUI playerWonText;
+    
+    public ClickSpawner clickSpawner;
 
     void Start()
     {
@@ -23,9 +26,9 @@ public class Game : MonoBehaviour
         UpdatePlayerUI();
     }
 
-    public void TryMakeMove(int x, int y, int z)
+    public bool TryMakeMove(int x, int y, int z)
     {
-        if (gameOver) return;
+        if (gameOver) return false;
 
         Debug.Log("TryMakeMove aufgerufen");
         bool success = board.PlacePiece(x, y, z, currentPlayer);
@@ -33,7 +36,7 @@ public class Game : MonoBehaviour
         if (!success)
         {
             Debug.Log("Ungültiger Spielzug!");
-            return;
+            return false;
         }
 
         Debug.Log($"Spielzug: {currentPlayer} -> {x},{y},{z}");
@@ -41,14 +44,12 @@ public class Game : MonoBehaviour
         if (board.CheckWin(currentPlayer))
         {
             Debug.Log(currentPlayer + " hat gewonnen!");
-            board.Clear();
-            
-            enabled = false;
             gameOver = true;
-            return;
+            HighlightWinningPieces();
+            ShowEndScreen();
         }
 
-        SwitchPlayer();
+        return true;
     }
 
     public void SwitchPlayer()
@@ -97,5 +98,17 @@ public class Game : MonoBehaviour
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
         Object.FindFirstObjectByType<ClickSpawner>().ResetPolesIsFull();
         board = new Board();
+    }
+
+    public void HighlightWinningPieces()
+    {
+        foreach (Vector3Int pos in board.winningPositions)
+        {
+            if (clickSpawner.spawnedPieces.TryGetValue(pos, out GameObject piece))
+            {
+                Renderer r = piece.GetComponent<Renderer>();
+                r.material.color = new Color(1f, 0.84f, 0f);
+            }
+        }
     }
 }
