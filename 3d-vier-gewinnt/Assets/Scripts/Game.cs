@@ -1,4 +1,5 @@
 using PlasticGui;
+using System.Net.Sockets;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -20,10 +21,15 @@ public class Game : MonoBehaviour
     
     public ClickSpawner clickSpawner;
 
+
+    public SocketClient socket;
+
     void Start()
     {
         board = new Board();
         UpdatePlayerUI();
+        socket = new SocketClient();
+        socket.Connect();
     }
 
     public bool TryMakeMove(int x, int y, int z)
@@ -38,6 +44,8 @@ public class Game : MonoBehaviour
             Debug.Log("Ungültiger Spielzug!");
             return false;
         }
+
+        socket.Send(x, y, z);
 
         Debug.Log($"Spielzug: {currentPlayer} -> {x},{y},{z}");
 
