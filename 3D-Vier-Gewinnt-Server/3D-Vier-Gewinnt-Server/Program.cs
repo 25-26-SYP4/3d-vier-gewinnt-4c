@@ -81,6 +81,7 @@ namespace _3D_Vier_Gewinnt_Server
 
             client.Close();
             Console.WriteLine("Client getrennt");
+            ResetAll();
         }
         static void ProcessMessage(string message)
         {
