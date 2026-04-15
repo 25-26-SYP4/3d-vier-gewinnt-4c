@@ -105,10 +105,15 @@ namespace _3D_Vier_Gewinnt_Server
         {
             ResetAll();
 
-            usbInterface.DigitalOutLine[2, 6] = true; // Versorgung
+            SetBinary(cGroupB, x); // Spalte
+            SetBinary(cGroupA, y); // Reihe
 
-            SetBinary(2, x); // Gruppe B
-            SetBinary(1, y); // Gruppe A
+            Thread.Sleep(200);
+
+            // Trigger → Stein fallen lassen
+            usbInterface.DigitalOutLine[cGroupA, 4] = true;
+            Thread.Sleep(100);
+            usbInterface.DigitalOutLine[cGroupA, 4] = false;
         }
         static void SetBinary(int group, int value)
         {
