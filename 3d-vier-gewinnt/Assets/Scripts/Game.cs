@@ -1,9 +1,11 @@
+using System;
 using PlasticGui;
 using System.Net.Sockets;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using Object = UnityEngine.Object;
 
 public class Game : MonoBehaviour
 {
@@ -17,10 +19,10 @@ public class Game : MonoBehaviour
     public bool gameOver = false;
 
     public GameObject endScreen;
+    public Button endscreenBackButton;
     public TextMeshProUGUI playerWonText;
     
     public ClickSpawner clickSpawner;
-
 
     public SocketClient socket;
 
@@ -129,5 +131,20 @@ public class Game : MonoBehaviour
                 }
             }
         }
+    }
+
+    public void ViewBoard()
+    {
+        Debug.Log("ViewBoard aufgerufen");
+        Debug.Log("Button vorher aktiv: " + endscreenBackButton.gameObject.activeSelf);
+        endScreen.SetActive(false);
+        endscreenBackButton.gameObject.SetActive(true);
+        Debug.Log("Button nachher aktiv: " + endscreenBackButton.gameObject.activeSelf);
+    }
+
+    public void BackToEndScreen()
+    {
+        endScreen.SetActive(true);
+        endscreenBackButton.gameObject.SetActive(false);
     }
 }
