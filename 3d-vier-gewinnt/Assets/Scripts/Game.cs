@@ -45,7 +45,7 @@ public class Game : MonoBehaviour
             return false;
         }
 
-        socket.Send(x, y, z);
+        socket.Send(x, y, currentPlayer == Player.Player1 ? 1 : 2);
 
         Debug.Log($"Spielzug: {currentPlayer} -> {x},{y},{z}");
 
