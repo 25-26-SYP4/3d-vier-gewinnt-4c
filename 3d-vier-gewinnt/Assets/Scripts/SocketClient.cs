@@ -13,9 +13,9 @@ public class SocketClient : MonoBehaviour
         stream = client.GetStream();
     }
 
-    public void Send(int x, int y, int z)
+    public void Send(int x, int y, int player)
     {
-        string message = $"{x},{y},{z}";
+        string message = $"{x},{y},{player}";
         byte[] data = Encoding.UTF8.GetBytes(message);
 
         stream.Write(data, 0, data.Length);

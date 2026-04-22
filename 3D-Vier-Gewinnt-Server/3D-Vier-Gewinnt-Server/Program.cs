@@ -22,17 +22,19 @@ namespace _3D_Vier_Gewinnt_Server
 
             if (!usbInterface.Open(deviceName))
             {
-                Console.WriteLine("❌ USB-PIO konnte nicht geöffnet werden!");
+                Console.WriteLine("USB-PIO konnte nicht geöffnet werden!");
                 return;
             }
 
-            Console.WriteLine("✅ USB-PIO verbunden!");
+            Console.WriteLine("USB-PIO verbunden!");
 
-            // 👉 GANZ WICHTIG: Richtung setzen
-            usbInterface.DigitalDirection[1] = 0x0000; // Gruppe A
-            usbInterface.DigitalDirection[2] = 0x0000; // Gruppe B
+            usbInterface.DigitalOutLine[cGroupB, 6] = true;
 
-            // 👉 Server starten
+            //Richtung setzen
+            usbInterface.DigitalDirection[cGroupA] = 0x0000; // Gruppe A
+            usbInterface.DigitalDirection[cGroupB] = 0x0000; // Gruppe B
+
+            //Server starten
             StartServer();
 
         }
@@ -91,25 +93,58 @@ namespace _3D_Vier_Gewinnt_Server
 
                 int x = int.Parse(parts[0]);
                 int y = int.Parse(parts[1]);
-                int z = int.Parse(parts[2]);
+                int player = int.Parse(parts[2]);
 
-                Console.WriteLine($"X:{x} Y:{y} Z:{z}");
+                Console.WriteLine($"X:{x} Y:{y} Z:{player}");
 
-                SendToHardware(x, y, z);
+                ExecuteMove(x, y, player);
             }
             catch
             {
                 Console.WriteLine("Fehler beim Parsen!");
             }
         }
-        static void SendToHardware(int x, int y, int z)
+        static void ExecuteMove(int x, int y, int player)
         {
             ResetAll();
 
-            usbInterface.DigitalOutLine[2, 6] = true; // Versorgung
+            // 1. Stein holen
+            TakePiece(player);
 
-            SetBinary(2, x); // Gruppe B
-            SetBinary(1, y); // Gruppe A
+            Thread.Sleep(500);
+
+            // 2. Position setzen
+            SetBinary(cGroupB, x); // Spalte
+            SetBinary(cGroupA, y); // Reihe
+
+            Thread.Sleep(300);
+
+            // 3. Trigger
+            Trigger();
+        }
+        static void Trigger()
+        {
+            usbInterface.DigitalOutLine[cGroupA, 2] = true;
+
+            Thread.Sleep(200);
+
+            usbInterface.DigitalOutLine[cGroupA, 2] = false;
+        }
+        static void TakePiece(int player)
+        {
+            if (player == 1)
+            {
+                usbInterface.DigitalOutLine[cGroupB, 4] = true; // EntnahmePos1
+            }
+            else
+            {
+                usbInterface.DigitalOutLine[cGroupB, 5] = true; // EntnahmePos2
+            }
+
+            Thread.Sleep(300);
+
+            usbInterface.DigitalOutLine[cGroupB, 4] = false;
+            usbInterface.DigitalOutLine[cGroupB, 5] = false;
         }
         static void SetBinary(int group, int value)
         {
