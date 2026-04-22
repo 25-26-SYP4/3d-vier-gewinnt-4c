@@ -22,6 +22,8 @@ public class ClickSpawner : MonoBehaviour
     public CanvasGroup messageGroup;
     public TextMeshProUGUI messageText;
 
+    private bool canPlace = true;
+
     private void Awake()
     {
         spawnedPieces = new Dictionary<Vector3Int, GameObject>();
@@ -54,6 +56,7 @@ public class ClickSpawner : MonoBehaviour
     void SpawnPieceOnPole(Transform poleTransform)
     {
         if (gameManager.gameOver) return;
+        if (!canPlace) return;
         
         Pole pole = poleTransform.GetComponent<Pole>();
 
@@ -95,7 +98,15 @@ public class ClickSpawner : MonoBehaviour
             {
                 poleTransform.GetComponent<Pole>().isFull = true;
             }
+            
+            canPlace = false;
+            Invoke(nameof(ResetCooldown), 0.5f);
         }
+    }
+    
+    private void ResetCooldown()
+    {
+        canPlace = true;
     }
 
     private GameObject SpawnGamePiece(Vector3 spawnPos, int stackCount, Transform poleTransform, int x, int y, int z)
