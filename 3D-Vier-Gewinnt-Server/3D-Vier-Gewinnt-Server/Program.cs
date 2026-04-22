@@ -95,7 +95,7 @@ namespace _3D_Vier_Gewinnt_Server
                 int y = int.Parse(parts[1]);
                 int player = int.Parse(parts[2]);
 
-                Console.WriteLine($"X:{x} Y:{y} Z:{player}");
+                Console.WriteLine($"X:{x} Y:{y} Player:{player}");
 
                 ExecuteMove(x, y, player);
             }
