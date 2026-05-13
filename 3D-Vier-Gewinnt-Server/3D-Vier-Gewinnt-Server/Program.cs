@@ -81,6 +81,10 @@ namespace _3D_Vier_Gewinnt_Server
                 Console.WriteLine("Empfangen: " + message);
 
                 ProcessMessage(message);
+                Thread.Sleep(2000);
+
+                byte[] response = Encoding.UTF8.GetBytes("DONE");
+                stream.Write(response, 0, response.Length);
             }
 
             client.Close();
@@ -126,7 +130,7 @@ namespace _3D_Vier_Gewinnt_Server
             commandCounter++;
             SendCommandCounter();
 
-            //WaitForRobot();
+            WaitForRobot();
 
             usbInterface.DigitalOutLine[cGroupB, 4] = false;
             usbInterface.DigitalOutLine[cGroupB, 5] = false;
@@ -138,7 +142,7 @@ namespace _3D_Vier_Gewinnt_Server
             commandCounter++;
             SendCommandCounter();
 
-            //WaitForRobot();
+            WaitForRobot();
         }
 
         static void TakePiece(int player)
@@ -173,15 +177,24 @@ namespace _3D_Vier_Gewinnt_Server
         {
             while (true)
             {
-                int robotCounter = ReadBinary(cGroupC);
+                //int robotCounter = ReadBinary(cGroupC);
 
-                if (robotCounter == commandCounter)
-                {
-                    Console.WriteLine("Roboter hat bestätigt!");
-                    break;
-                }
+                //if (robotCounter == commandCounter)
+                //{
+                //    Console.WriteLine("Roboter hat bestätigt!");
+                //    break;
+                //}
 
-                Thread.Sleep(50);
+                //Thread.Sleep(50);
+
+
+
+                Console.WriteLine("Warte auf Roboter...");
+
+                Thread.Sleep(2000);
+
+                Console.WriteLine("Roboter bestätigt!");
+
             }
         }
         static int ReadBinary(int group)

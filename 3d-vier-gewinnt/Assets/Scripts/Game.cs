@@ -1,11 +1,11 @@
 using System;
-using PlasticGui;
 using System.Net.Sockets;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using Object = UnityEngine.Object;
+using System.Collections;
 
 public class Game : MonoBehaviour
 {
@@ -26,6 +26,8 @@ public class Game : MonoBehaviour
 
     public SocketClient socket;
 
+    private bool waitingForRobot = false;
+
     void Start()
     {
         board = new Board();
@@ -36,6 +38,11 @@ public class Game : MonoBehaviour
 
     public bool TryMakeMove(int x, int y, int z)
     {
+        if (waitingForRobot)
+        {
+            Debug.Log("Warte auf Roboter...");
+            return false;
+        }
         if (gameOver) return false;
 
         Debug.Log("TryMakeMove aufgerufen");
@@ -46,8 +53,9 @@ public class Game : MonoBehaviour
             Debug.Log("Ungültiger Spielzug!");
             return false;
         }
-
+        waitingForRobot = true;
         socket.Send(x, y, currentPlayer == Player.Player1 ? 1 : 2);
+        StartCoroutine(WaitForRobot());
 
         Debug.Log($"Spielzug: {currentPlayer} -> {x},{y},{z}");
 
@@ -146,5 +154,20 @@ public class Game : MonoBehaviour
     {
         endScreen.SetActive(true);
         endscreenBackButton.gameObject.SetActive(false);
+    }
+    IEnumerator WaitForRobot()
+    {
+        string response = socket.Receive();
+
+        Debug.Log("Server Antwort: " + response);
+
+        if (response == "DONE")
+        {
+            waitingForRobot = false;
+
+            SwitchPlayer();
+        }
+
+        yield break;
     }
 }

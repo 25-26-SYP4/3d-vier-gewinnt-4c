@@ -20,4 +20,12 @@ public class SocketClient : MonoBehaviour
 
         stream.Write(data, 0, data.Length);
     }
+    public string Receive()
+    {
+        byte[] buffer = new byte[1024];
+
+        int bytesRead = stream.Read(buffer, 0, buffer.Length);
+
+        return Encoding.UTF8.GetString(buffer, 0, bytesRead);
+    }
 }
