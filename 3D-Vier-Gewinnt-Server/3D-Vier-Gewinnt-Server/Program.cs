@@ -108,18 +108,22 @@ namespace _3D_Vier_Gewinnt_Server
         {
             ResetAll();
 
+            // Position berechnen (0-15)
+            int position = y * 4 + x;
+
+            Console.WriteLine($"Position: {position}");
+
             // 1. Stein holen
             TakePiece(player);
 
             Thread.Sleep(500);
 
-            // 2. Position setzen
-            SetBinary(cGroupB, x); // Spalte
-            SetBinary(cGroupA, y); // Reihe
+            // 2. Position binär auf Gruppe B senden
+            SetBinary(cGroupB, position);
 
             Thread.Sleep(300);
 
-            // 3. Trigger
+            // 3. Trigger/Befehlszähler
             Trigger();
         }
         static void Trigger()
