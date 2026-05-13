@@ -12,6 +12,8 @@ namespace _3D_Vier_Gewinnt_Server
         public const int cGroupB = 2; // Ablage & Entnahme
         public const int cGroupC = 3; // Eingänge vom Fanuc
 
+        static int commandCounter = 0;
+
         static LIBADX.LIBADX usbInterface;
 
         static void Main(string[] args)
@@ -106,34 +108,39 @@ namespace _3D_Vier_Gewinnt_Server
         }
         static void ExecuteMove(int x, int y, int player)
         {
-            ResetAll();
-
-            // Position berechnen (0-15)
             int position = y * 4 + x;
 
             Console.WriteLine($"Position: {position}");
 
-            // 1. Stein holen
-            TakePiece(player);
+            // ===== 1. Stein holen =====
 
-            Thread.Sleep(500);
+            if (player == 1)
+            {
+                usbInterface.DigitalOutLine[cGroupB, 4] = true;
+            }
+            else
+            {
+                usbInterface.DigitalOutLine[cGroupB, 5] = true;
+            }
 
-            // 2. Position binär auf Gruppe B senden
+            commandCounter++;
+            SendCommandCounter();
+
+            //WaitForRobot();
+
+            usbInterface.DigitalOutLine[cGroupB, 4] = false;
+            usbInterface.DigitalOutLine[cGroupB, 5] = false;
+
+            // ===== 2. Position senden =====
+
             SetBinary(cGroupB, position);
 
-            Thread.Sleep(300);
+            commandCounter++;
+            SendCommandCounter();
 
-            // 3. Trigger/Befehlszähler
-            Trigger();
+            //WaitForRobot();
         }
-        static void Trigger()
-        {
-            usbInterface.DigitalOutLine[cGroupA, 2] = true;
 
-            Thread.Sleep(200);
-
-            usbInterface.DigitalOutLine[cGroupA, 2] = false;
-        }
         static void TakePiece(int player)
         {
             if (player == 1)
@@ -157,6 +164,41 @@ namespace _3D_Vier_Gewinnt_Server
                 bool bit = (value & (1 << i)) != 0;
                 usbInterface.DigitalOutLine[group, i] = bit;
             }
+        }
+        static void SendCommandCounter()
+        {
+            SetBinary(cGroupA, commandCounter);
+        }
+        static void WaitForRobot()
+        {
+            while (true)
+            {
+                int robotCounter = ReadBinary(cGroupC);
+
+                if (robotCounter == commandCounter)
+                {
+                    Console.WriteLine("Roboter hat bestätigt!");
+                    break;
+                }
+
+                Thread.Sleep(50);
+            }
+        }
+        static int ReadBinary(int group)
+        {
+            int value = 0;
+
+            for (int i = 0; i < 4; i++)
+            {
+                bool bit = usbInterface.DigitalInLine[group, i];
+
+                if (bit)
+                {
+                    value |= (1 << i);
+                }
+            }
+
+            return value;
         }
         static void ResetAll()
         {
