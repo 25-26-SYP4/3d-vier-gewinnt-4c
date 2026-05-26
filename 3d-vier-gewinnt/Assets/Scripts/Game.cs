@@ -38,11 +38,11 @@ public class Game : MonoBehaviour
 
     public bool TryMakeMove(int x, int y, int z)
     {
-        if (waitingForRobot)
-        {
-            Debug.Log("Warte auf Roboter...");
-            return false;
-        }
+        //if (waitingForRobot)
+        //{
+        //    Debug.Log("Warte auf Roboter...");
+        //    return false;
+        //}
         if (gameOver) return false;
 
         Debug.Log("TryMakeMove aufgerufen");
