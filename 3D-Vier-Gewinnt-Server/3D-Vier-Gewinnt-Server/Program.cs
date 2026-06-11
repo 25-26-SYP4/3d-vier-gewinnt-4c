@@ -118,14 +118,7 @@ namespace _3D_Vier_Gewinnt_Server
 
             // ===== 1. Stein holen =====
 
-            if (player == 1)
-            {
-                usbInterface.DigitalOutLine[cGroupB, 4] = true;
-            }
-            else
-            {
-                usbInterface.DigitalOutLine[cGroupB, 5] = true;
-            }
+            TakePiece(player);
 
             commandCounter++;
             SendCommandCounter();
