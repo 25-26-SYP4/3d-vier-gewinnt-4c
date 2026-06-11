@@ -21,19 +21,34 @@ public class Game : MonoBehaviour
     public GameObject endScreen;
     public Button endscreenBackButton;
     public TextMeshProUGUI playerWonText;
-    
+
     public ClickSpawner clickSpawner;
 
     public SocketClient socket;
 
     private bool waitingForRobot = false;
 
+    public bool useBackend = true;
+
     void Start()
     {
         board = new Board();
         UpdatePlayerUI();
-        socket = new SocketClient();
-        socket.Connect();
+
+        if (useBackend)
+        {
+            socket = new SocketClient();
+
+            try
+            {
+                socket.Connect();
+            }
+            catch
+            {
+                Debug.LogWarning("Backend nicht erreichbar.");
+                useBackend = false;
+            }
+        }
     }
 
     public bool TryMakeMove(int x, int y, int z)
@@ -53,9 +68,12 @@ public class Game : MonoBehaviour
             Debug.Log("Ungültiger Spielzug!");
             return false;
         }
-        waitingForRobot = true;
-        socket.Send(x, y, currentPlayer == Player.Player1 ? 1 : 2);
-        StartCoroutine(WaitForRobot());
+        if (useBackend)
+        {
+            waitingForRobot = true;
+            socket.Send(x, y, currentPlayer == Player.Player1 ? 1 : 2);
+            StartCoroutine(WaitForRobot());
+        }
 
         Debug.Log($"Spielzug: {currentPlayer} -> {x},{y},{z}");
 
@@ -72,6 +90,7 @@ public class Game : MonoBehaviour
 
     public void SwitchPlayer()
     {
+        Debug.Log("SwitchPlayer aufgerufen");
         currentPlayer = currentPlayer == Player.Player1 ? Player.Player2 : Player.Player1;
 
         UpdatePlayerUI();
@@ -99,7 +118,7 @@ public class Game : MonoBehaviour
         }
         else
         {
-            panel.color = new Color(55f/255, 55f/255, 55f / 255, 0.3f);
+            panel.color = new Color(55f / 255, 55f / 255, 55f / 255, 0.3f);
             text.color = Color.gray;
             panel.transform.localScale = Vector3.one;
         }
@@ -123,7 +142,7 @@ public class Game : MonoBehaviour
         clickSpawner = Object.FindFirstObjectByType<ClickSpawner>();
 
         if (clickSpawner == null) return;
-        
+
         foreach (Vector3Int pos in board.winningPositions)
         {
             if (clickSpawner.spawnedPieces.TryGetValue(pos, out GameObject piece))
