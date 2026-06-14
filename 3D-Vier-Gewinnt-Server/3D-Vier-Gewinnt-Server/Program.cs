@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -8,21 +8,22 @@ namespace _3D_Vier_Gewinnt_Server
 {
     public class Program
     {
-        public const int cGroupA = 1; // Befehlszähler
-        public const int cGroupB = 2; // Ablage & Entnahme
-        public const int cGroupC = 3; // Eingänge vom Fanuc
-
+        // Befehlszähler läuft 0-7 (3 Bit → DI[101, 102, 103])
         static int commandCounter = 0;
 
         static LIBADX.LIBADX usbInterface;
+
+        // ── Modus wählen ──────────────────────────────────────────────────────
+        // true  → MIT Befehlszähler + Handshake (Produktivbetrieb)
+        // false → OHNE Befehlszähler, nur Pins setzen + Sleep (zum Testen)
+        const bool USE_COMMAND_COUNTER = false;
+        // ──────────────────────────────────────────────────────────────────────
 
         static void Main(string[] args)
         {
             usbInterface = new LIBADX.LIBADX();
 
-            string deviceName = "USB-PIO";
-
-            if (!usbInterface.Open(deviceName))
+            if (!usbInterface.Open("USB-PIO"))
             {
                 Console.WriteLine("USB-PIO konnte nicht geöffnet werden!");
                 return;
@@ -30,16 +31,22 @@ namespace _3D_Vier_Gewinnt_Server
 
             Console.WriteLine("USB-PIO verbunden!");
 
-            usbInterface.DigitalOutLine[cGroupB, 6] = true;
+            // Alle genutzten Gruppen als Output konfigurieren
+            usbInterface.DigitalDirection[RobotConfig.GroupA] = 0x0000;
+            usbInterface.DigitalDirection[RobotConfig.GroupB] = 0x0000;
 
-            //Richtung setzen
-            usbInterface.DigitalDirection[cGroupA] = 0x0000; // Gruppe A
-            usbInterface.DigitalDirection[cGroupB] = 0x0000; // Gruppe B
-
-            //Server starten
-            StartServer();
-
+            if (USE_COMMAND_COUNTER)
+            {
+                Console.WriteLine("Modus: MIT Befehlszähler");
+                StartServer();
+            }
+            else
+            {
+                Console.WriteLine("Modus: OHNE Befehlszähler (Test)");
+                ProgramSimple.Run(usbInterface);
+            }
         }
+
         static void StartServer()
         {
             TcpListener server = new TcpListener(IPAddress.Any, 5000);
@@ -51,13 +58,13 @@ namespace _3D_Vier_Gewinnt_Server
             {
                 Console.WriteLine("Warte auf Verbindung...");
                 TcpClient client = server.AcceptTcpClient();
-
                 Console.WriteLine("Client verbunden!");
 
                 Thread clientThread = new Thread(() => HandleClient(client));
                 clientThread.Start();
             }
         }
+
         static void HandleClient(TcpClient client)
         {
             NetworkStream stream = client.GetStream();
@@ -81,7 +88,6 @@ namespace _3D_Vier_Gewinnt_Server
                 Console.WriteLine("Empfangen: " + message);
 
                 ProcessMessage(message);
-                Thread.Sleep(2000);
 
                 byte[] response = Encoding.UTF8.GetBytes("DONE");
                 stream.Write(response, 0, response.Length);
@@ -91,18 +97,17 @@ namespace _3D_Vier_Gewinnt_Server
             Console.WriteLine("Client getrennt");
             ResetAll();
         }
+
         static void ProcessMessage(string message)
         {
             try
             {
                 string[] parts = message.Split(',');
-
                 int x = int.Parse(parts[0]);
                 int y = int.Parse(parts[1]);
                 int player = int.Parse(parts[2]);
 
                 Console.WriteLine($"X:{x} Y:{y} Player:{player}");
-
                 ExecuteMove(x, y, player);
             }
             catch
@@ -110,109 +115,146 @@ namespace _3D_Vier_Gewinnt_Server
                 Console.WriteLine("Fehler beim Parsen!");
             }
         }
+
         static void ExecuteMove(int x, int y, int player)
         {
             int position = y * 4 + x;
-
             Console.WriteLine($"Position: {position}");
 
-            // ===== 1. Stein holen =====
+            // ===== Schritt 1: Entnahme =====
+            // Entnahme-Pin setzen (bleibt AN solange der Roboter arbeitet)
+            SetEntnahme(player);
 
-            TakePiece(player);
-
-            commandCounter++;
+            // Befehlszähler erhöhen und senden → Roboter startet Befehl
+            commandCounter = (commandCounter + 1) % 8;
             SendCommandCounter();
+            Console.WriteLine($"[Entnahme] Befehlszähler gesendet: {commandCounter}");
 
-            //WaitForRobot();
+            // Warten bis Roboter denselben Zählerwert zurückschickt
+            WaitForRobot();
 
-            usbInterface.DigitalOutLine[cGroupB, 4] = false;
-            usbInterface.DigitalOutLine[cGroupB, 5] = false;
+            // Entnahme-Pin löschen (Stein wurde geholt)
+            ClearEntnahme();
 
-            // ===== 2. Position senden =====
+            // ===== Schritt 2: Ablage =====
+            // Position-Pins setzen (bleiben AN solange der Roboter arbeitet)
+            SetPosition(position);
 
-            SetBinary(cGroupB, position);
-
-            commandCounter++;
+            // Befehlszähler erhöhen und senden → Roboter fährt zur Position
+            commandCounter = (commandCounter + 1) % 8;
             SendCommandCounter();
+            Console.WriteLine($"[Ablage] Befehlszähler gesendet: {commandCounter}");
 
-            //WaitForRobot();
+            // Warten bis Roboter bestätigt
+            WaitForRobot();
+
+            // Position-Pins löschen (Stein wurde platziert)
+            ClearPosition();
         }
 
-        static void TakePiece(int player)
+        // Setzt den Entnahme-Pin je nach Spieler und lässt ihn AN.
+        // Player 1 (Grün):  DI[111]=OFF, DI[112]=OFF → kein Pin nötig
+        // Player 2 (Blöck): DI[111]=ON               → Group B Pin 2
+        static void SetEntnahme(int player)
         {
-            if (player == 1)
+            if (player == 2)
             {
-                usbInterface.DigitalOutLine[cGroupB, 4] = true; // EntnahmePos1
+                usbInterface.DigitalOutLine[RobotConfig.EntnahmeGroup, RobotConfig.EntnahmeBlockPin] = true;
+                Console.WriteLine("Entnahme: Blöck (DI[111]=ON)");
             }
             else
             {
-                usbInterface.DigitalOutLine[cGroupB, 5] = true; // EntnahmePos2
+                Console.WriteLine("Entnahme: Grün (DI[111]=OFF, DI[112]=OFF)");
             }
-
-            Thread.Sleep(300);
-
-            usbInterface.DigitalOutLine[cGroupB, 4] = false;
-            usbInterface.DigitalOutLine[cGroupB, 5] = false;
         }
-        static void SetBinary(int group, int value)
+
+        static void ClearEntnahme()
         {
-            for (int i = 0; i < 4; i++)
+            usbInterface.DigitalOutLine[RobotConfig.EntnahmeGroup, RobotConfig.EntnahmeBlockPin] = false;
+        }
+
+        // Setzt die Board-Position als 4-Bit-Binärwert.
+        // Bit 0 (A^1) → Group A Pin 6 → DI[107]
+        // Bit 1 (A^2) → Group A Pin 7 → DI[108]
+        // Bit 2 (A^4) → Group B Pin 0 → DI[109]
+        // Bit 3 (A^8) → Group B Pin 1 → DI[110]
+        static void SetPosition(int position)
+        {
+            for (int i = 0; i < RobotConfig.AblagePins.Length; i++)
             {
-                bool bit = (value & (1 << i)) != 0;
-                usbInterface.DigitalOutLine[group, i] = bit;
+                bool bit = (position & (1 << i)) != 0;
+                var (group, pin) = RobotConfig.AblagePins[i];
+                usbInterface.DigitalOutLine[group, pin] = bit;
+            }
+
+            Console.WriteLine($"Position gesetzt: {position} (binär: {Convert.ToString(position, 2).PadLeft(4, '0')})");
+        }
+
+        static void ClearPosition()
+        {
+            foreach (var (group, pin) in RobotConfig.AblagePins)
+            {
+                usbInterface.DigitalOutLine[group, pin] = false;
             }
         }
+
+        // Sendet den aktuellen Befehlszähler als 3-Bit-Wert (0-7).
+        // Bit 0 → DI[101] (B^1)
+        // Bit 1 → DI[102] (B^2)
+        // Bit 2 → DI[103] (B^4)
         static void SendCommandCounter()
         {
-            SetBinary(cGroupA, commandCounter);
+            for (int i = 0; i < RobotConfig.CommandCounterBits; i++)
+            {
+                bool bit = (commandCounter & (1 << i)) != 0;
+                usbInterface.DigitalOutLine[RobotConfig.CommandCounterGroup, RobotConfig.CommandCounterStartPin + i] = bit;
+            }
         }
-        //static void WaitForRobot()
-        //{
-        //    while (true)
-        //    {
-        //        //int robotCounter = ReadBinary(cGroupC);
 
-        //        //if (robotCounter == commandCounter)
-        //        //{
-        //        //    Console.WriteLine("Roboter hat bestätigt!");
-        //        //    break;
-        //        //}
+        // Blockiert bis der Roboter denselben Befehlszählerwert zurückschickt.
+        static void WaitForRobot()
+        {
+            Console.WriteLine($"Warte auf Roboter-Bestätigung (Zähler={commandCounter})...");
 
-        //        //Thread.Sleep(50);
+            while (true)
+            {
+                int robotCounter = ReadFeedback();
 
+                if (robotCounter == commandCounter)
+                {
+                    Console.WriteLine("Roboter hat bestätigt!");
+                    break;
+                }
 
+                Thread.Sleep(50);
+            }
+        }
 
-        //        Console.WriteLine("Warte auf Roboter...");
-
-        //        Thread.Sleep(2000);
-
-        //        Console.WriteLine("Roboter bestätigt!");
-
-        //    }
-        //}
-        static int ReadBinary(int group)
+        // Liest den Rückgabe-Befehlszähler vom Roboter (Group C).
+        static int ReadFeedback()
         {
             int value = 0;
 
-            for (int i = 0; i < 4; i++)
+            for (int i = 0; i < RobotConfig.FeedbackBits; i++)
             {
-                bool bit = usbInterface.DigitalInLine[group, i];
+                bool bit = usbInterface.DigitalInLine[RobotConfig.FeedbackGroup, RobotConfig.FeedbackStartPin + i];
 
                 if (bit)
-                {
                     value |= (1 << i);
-                }
             }
 
             return value;
         }
+
         static void ResetAll()
         {
             for (int i = 0; i < 8; i++)
             {
-                usbInterface.DigitalOutLine[cGroupA, i] = false;
-                usbInterface.DigitalOutLine[cGroupB, i] = false;
+                usbInterface.DigitalOutLine[RobotConfig.GroupA, i] = false;
+                usbInterface.DigitalOutLine[RobotConfig.GroupB, i] = false;
             }
+
+            commandCounter = 0;
         }
     }
 }
