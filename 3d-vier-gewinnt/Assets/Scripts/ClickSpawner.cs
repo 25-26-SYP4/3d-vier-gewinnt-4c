@@ -57,7 +57,14 @@ public class ClickSpawner : MonoBehaviour
     {
         if (gameManager.gameOver) return;
         if (!canPlace) return;
-        
+
+        // Während der Roboter den vorigen Zug ausführt, keinen neuen Stein setzen.
+        if (gameManager.IsWaitingForRobot)
+        {
+            ShowMessage("Warte auf Roboter...");
+            return;
+        }
+
         Pole pole = poleTransform.GetComponent<Pole>();
 
         if (!poleStacks.ContainsKey(poleTransform))
@@ -91,14 +98,15 @@ public class ClickSpawner : MonoBehaviour
         
         if (success || gameManager.gameOver)
         {
-            gameManager.SwitchPlayer();
+            // Spielerwechsel macht NUR der Game-Manager (nach "DONE" vom Roboter
+            // bzw. sofort ohne Backend) – hier NICHT mehr, sonst doppelt.
             poleStacks[poleTransform]++;
 
             if (poleStacks[poleTransform] == 4)
             {
                 poleTransform.GetComponent<Pole>().isFull = true;
             }
-            
+
             canPlace = false;
             Invoke(nameof(ResetCooldown), 0.5f);
         }

@@ -1,11 +1,9 @@
-using System;
-using System.Net.Sockets;
+using System.Collections;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using Object = UnityEngine.Object;
-using System.Collections;
 
 public class Game : MonoBehaviour
 {
@@ -27,6 +25,9 @@ public class Game : MonoBehaviour
     public SocketClient socket;
 
     private bool waitingForRobot = false;
+
+    // Solange true, arbeitet der Roboter noch am letzten Zug → kein neuer Zug.
+    public bool IsWaitingForRobot => waitingForRobot;
 
     public bool useBackend = true;
 
@@ -53,12 +54,16 @@ public class Game : MonoBehaviour
 
     public bool TryMakeMove(int x, int y, int z)
     {
-        //if (waitingForRobot)
-        //{
-        //    Debug.Log("Warte auf Roboter...");
-        //    return false;
-        //}
         if (gameOver) return false;
+
+        // Solange der Roboter den vorigen Zug ausführt, keinen neuen Zug annehmen.
+        // Das verhindert, dass mehrere Nachrichten gleichzeitig an den Server gehen
+        // (sonst kommen sie zusammengeklebt an → "viel zu viele Parameter").
+        if (waitingForRobot)
+        {
+            Debug.Log("Warte auf Roboter...");
+            return false;
+        }
 
         Debug.Log("TryMakeMove aufgerufen");
         bool success = board.PlacePiece(x, y, z, currentPlayer);
@@ -68,21 +73,31 @@ public class Game : MonoBehaviour
             Debug.Log("Ungültiger Spielzug!");
             return false;
         }
-        if (useBackend)
-        {
-            waitingForRobot = true;
-            socket.Send(x, y, currentPlayer == Player.Player1 ? 1 : 2);
-            StartCoroutine(WaitForRobot());
-        }
 
         Debug.Log($"Spielzug: {currentPlayer} -> {x},{y},{z}");
 
-        if (board.CheckWin(currentPlayer))
+        bool won = board.CheckWin(currentPlayer);
+        if (won)
         {
             Debug.Log(currentPlayer + " hat gewonnen!");
             gameOver = true;
             HighlightWinningPieces();
             ShowEndScreen();
+        }
+
+        if (useBackend)
+        {
+            // Zug an den Server senden. Der Spielerwechsel passiert ERST, wenn der
+            // Roboter mit "DONE" bestätigt (siehe WaitForRobot) – nicht hier und
+            // nicht im ClickSpawner (sonst doppelter Wechsel!).
+            waitingForRobot = true;
+            socket.Send(x, y, currentPlayer == Player.Player1 ? 1 : 2);
+            StartCoroutine(WaitForRobot());
+        }
+        else if (!won)
+        {
+            // Ohne Backend gibt es kein "DONE" → direkt wechseln.
+            SwitchPlayer();
         }
 
         return true;
@@ -176,17 +191,38 @@ public class Game : MonoBehaviour
     }
     IEnumerator WaitForRobot()
     {
-        string response = socket.Receive();
+        // socket.Receive() blockiert, bis der Server "DONE" schickt (~6 s).
+        // Würde man es direkt in der Coroutine aufrufen, friert der komplette
+        // Unity-Main-Thread ein. Deshalb läuft das Lesen in einem Hintergrund-Task,
+        // und wir warten hier nicht-blockierend (yield return null) bis er fertig ist.
+        var receiveTask = System.Threading.Tasks.Task.Run(() => socket.Receive());
 
+        while (!receiveTask.IsCompleted)
+            yield return null;
+
+        if (receiveTask.IsFaulted)
+        {
+            Debug.LogError("Fehler beim Empfangen vom Server: " + receiveTask.Exception);
+            waitingForRobot = false;
+            yield break;
+        }
+
+        string response = receiveTask.Result;
         Debug.Log("Server Antwort: " + response);
 
+        // Ab hier sind wir wieder im Main-Thread → SwitchPlayer/UI ist erlaubt.
         if (response == "DONE")
         {
             waitingForRobot = false;
 
-            SwitchPlayer();
+            // Nach einem Gewinnzug nicht mehr wechseln.
+            if (!gameOver)
+                SwitchPlayer();
         }
-
-        yield break;
+        else
+        {
+            // Unerwartete Antwort: trotzdem entsperren, sonst hängt das Spiel.
+            waitingForRobot = false;
+        }
     }
 }

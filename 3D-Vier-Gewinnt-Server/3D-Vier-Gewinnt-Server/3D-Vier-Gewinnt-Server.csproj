@@ -43,7 +43,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="MessageProtocol.cs" />
+    <Compile Include="PioDiagnostic.cs" />
+    <Compile Include="PioOutput.cs" />
     <Compile Include="Program.cs" />
+    <Compile Include="ProgramSimple.cs" />
+    <Compile Include="RobotConfig.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

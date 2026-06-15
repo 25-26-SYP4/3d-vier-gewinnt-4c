@@ -15,17 +15,31 @@ public class SocketClient : MonoBehaviour
 
     public void Send(int x, int y, int player)
     {
-        string message = $"{x},{y},{player}";
+        // Jede Nachricht mit '\n' abschließen, damit der Server mehrere schnell
+        // gesendete Züge sauber trennen kann (TCP ist ein Byte-Strom!).
+        string message = $"{x},{y},{player}\n";
         byte[] data = Encoding.UTF8.GetBytes(message);
 
         stream.Write(data, 0, data.Length);
     }
+
+    // Liest genau EINE Zeile (bis '\n'). So werden keine zwei Server-Antworten
+    // zusammengezogen und keine halbe Antwort zurückgegeben.
     public string Receive()
     {
-        byte[] buffer = new byte[1024];
+        StringBuilder sb = new StringBuilder();
+        byte[] one = new byte[1];
 
-        int bytesRead = stream.Read(buffer, 0, buffer.Length);
+        while (true)
+        {
+            int n = stream.Read(one, 0, 1);
+            if (n == 0) break; // Verbindung geschlossen
 
-        return Encoding.UTF8.GetString(buffer, 0, bytesRead);
+            char c = (char)one[0];
+            if (c == '\n') break;
+            if (c != '\r') sb.Append(c);
+        }
+
+        return sb.ToString();
     }
 }

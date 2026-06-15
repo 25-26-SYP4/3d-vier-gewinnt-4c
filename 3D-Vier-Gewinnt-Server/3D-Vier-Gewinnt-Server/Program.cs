@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -12,6 +13,9 @@ namespace _3D_Vier_Gewinnt_Server
         static int commandCounter = 0;
 
         static LIBADX.LIBADX usbInterface;
+
+        // Kapselt die digitalen Ausgänge (schreibt immer ganze Gruppen-Bytes).
+        static PioOutput pio;
 
         // ── Modus wählen ──────────────────────────────────────────────────────
         // true  → MIT Befehlszähler + Handshake (Produktivbetrieb)
@@ -31,9 +35,24 @@ namespace _3D_Vier_Gewinnt_Server
 
             Console.WriteLine("USB-PIO verbunden!");
 
-            // Alle genutzten Gruppen als Output konfigurieren
-            usbInterface.DigitalDirection[RobotConfig.GroupA] = 0x0000;
-            usbInterface.DigitalDirection[RobotConfig.GroupB] = 0x0000;
+            // Diagnose-Modus:  3D-Vier-Gewinnt-Server.exe diag
+            // Probiert Richtung/Schreibart/Gruppe durch, um das LED-Problem
+            // eindeutig einzugrenzen (siehe PioDiagnostic.cs).
+            if (args.Length > 0 && args[0].Equals("diag", StringComparison.OrdinalIgnoreCase))
+            {
+                PioDiagnostic.Run(usbInterface);
+                return;
+            }
+
+            // Group A und B als Output konfigurieren. Ab jetzt laufen ALLE
+            // Pin-Ausgaben über pio, das pro Gruppe ein Schatten-Byte hält und
+            // immer das komplette Byte über DigitalOut[group] schreibt
+            // (siehe PioOutput.cs – behebt das "nur 1 Pin leuchtet"-Problem).
+            pio = new PioOutput(usbInterface, RobotConfig.GroupA, RobotConfig.GroupB);
+
+            // Versorgung Schalter dauerhaft HIGH. Bleibt durch das Schatten-Byte
+            // erhalten, auch wenn Ablage/Entnahme-Pins wechseln.
+            pio.SetLine(RobotConfig.VersorgungGroup, RobotConfig.VersorgungPin, true);
 
             if (USE_COMMAND_COUNTER)
             {
@@ -43,7 +62,7 @@ namespace _3D_Vier_Gewinnt_Server
             else
             {
                 Console.WriteLine("Modus: OHNE Befehlszähler (Test)");
-                ProgramSimple.Run(usbInterface);
+                ProgramSimple.Run(pio);
             }
         }
 
@@ -67,53 +86,12 @@ namespace _3D_Vier_Gewinnt_Server
 
         static void HandleClient(TcpClient client)
         {
-            NetworkStream stream = client.GetStream();
-            byte[] buffer = new byte[1024];
+            // Liest zeilenweise (newline-getrennt) und ruft pro Zug ExecuteMove auf;
+            // schickt danach automatisch "DONE\n" zurück. Siehe MessageProtocol.
+            MessageProtocol.ServeMoves(client, "", ExecuteMove);
 
-            while (true)
-            {
-                int bytesRead;
-
-                try
-                {
-                    bytesRead = stream.Read(buffer, 0, buffer.Length);
-                    if (bytesRead == 0) break;
-                }
-                catch
-                {
-                    break;
-                }
-
-                string message = Encoding.UTF8.GetString(buffer, 0, bytesRead);
-                Console.WriteLine("Empfangen: " + message);
-
-                ProcessMessage(message);
-
-                byte[] response = Encoding.UTF8.GetBytes("DONE");
-                stream.Write(response, 0, response.Length);
-            }
-
-            client.Close();
             Console.WriteLine("Client getrennt");
             ResetAll();
-        }
-
-        static void ProcessMessage(string message)
-        {
-            try
-            {
-                string[] parts = message.Split(',');
-                int x = int.Parse(parts[0]);
-                int y = int.Parse(parts[1]);
-                int player = int.Parse(parts[2]);
-
-                Console.WriteLine($"X:{x} Y:{y} Player:{player}");
-                ExecuteMove(x, y, player);
-            }
-            catch
-            {
-                Console.WriteLine("Fehler beim Parsen!");
-            }
         }
 
         static void ExecuteMove(int x, int y, int player)
@@ -153,49 +131,52 @@ namespace _3D_Vier_Gewinnt_Server
         }
 
         // Setzt den Entnahme-Pin je nach Spieler und lässt ihn AN.
-        // Player 1 (Grün):  DI[111]=OFF, DI[112]=OFF → kein Pin nötig
-        // Player 2 (Blöck): DI[111]=ON               → Group B Pin 2
+        // Player 1 (Grün):  EntnahmePos1+2 AUS                → kein Pin nötig
+        // Player 2 (Blöck): EntnahmePos1 AN (B/4, D-Sub 7)    → Fanuc 11
         static void SetEntnahme(int player)
         {
             if (player == 2)
             {
-                usbInterface.DigitalOutLine[RobotConfig.EntnahmeGroup, RobotConfig.EntnahmeBlockPin] = true;
-                Console.WriteLine("Entnahme: Blöck (DI[111]=ON)");
+                pio.SetLine(RobotConfig.EntnahmeGroup, RobotConfig.EntnahmePos1Pin, true);
+                Console.WriteLine("Entnahme: Blöck (EntnahmePos1 AN)");
             }
             else
             {
-                Console.WriteLine("Entnahme: Grün (DI[111]=OFF, DI[112]=OFF)");
+                Console.WriteLine("Entnahme: Grün (EntnahmePos1+2 AUS)");
             }
         }
 
         static void ClearEntnahme()
         {
-            usbInterface.DigitalOutLine[RobotConfig.EntnahmeGroup, RobotConfig.EntnahmeBlockPin] = false;
+            pio.SetLine(RobotConfig.EntnahmeGroup, RobotConfig.EntnahmePos1Pin, false);
         }
 
-        // Setzt die Board-Position als 4-Bit-Binärwert.
-        // Bit 0 (A^1) → Group A Pin 6 → DI[107]
-        // Bit 1 (A^2) → Group A Pin 7 → DI[108]
-        // Bit 2 (A^4) → Group B Pin 0 → DI[109]
-        // Bit 3 (A^8) → Group B Pin 1 → DI[110]
+        // Setzt die Board-Position als 4-Bit-Binärwert (Ablage, Port B).
+        // Bit 0 (1) → B/0 → D-Sub 5  → Fanuc 7
+        // Bit 1 (2) → B/1 → D-Sub 18 → Fanuc 8
+        // Bit 2 (4) → B/2 → D-Sub 6  → Fanuc 9
+        // Bit 3 (8) → B/3 → D-Sub 19 → Fanuc 10
         static void SetPosition(int position)
         {
+            var lines = new List<(int, int, bool)>();
             for (int i = 0; i < RobotConfig.AblagePins.Length; i++)
             {
                 bool bit = (position & (1 << i)) != 0;
                 var (group, pin) = RobotConfig.AblagePins[i];
-                usbInterface.DigitalOutLine[group, pin] = bit;
+                lines.Add((group, pin, bit));
             }
+            // Alle Ablage-Bits in einem Rutsch setzen (pro Gruppe ein Hardware-Write).
+            pio.SetLines(lines);
 
             Console.WriteLine($"Position gesetzt: {position} (binär: {Convert.ToString(position, 2).PadLeft(4, '0')})");
         }
 
         static void ClearPosition()
         {
+            var lines = new List<(int, int, bool)>();
             foreach (var (group, pin) in RobotConfig.AblagePins)
-            {
-                usbInterface.DigitalOutLine[group, pin] = false;
-            }
+                lines.Add((group, pin, false));
+            pio.SetLines(lines);
         }
 
         // Sendet den aktuellen Befehlszähler als 3-Bit-Wert (0-7).
@@ -204,18 +185,26 @@ namespace _3D_Vier_Gewinnt_Server
         // Bit 2 → DI[103] (B^4)
         static void SendCommandCounter()
         {
+            var lines = new List<(int, int, bool)>();
             for (int i = 0; i < RobotConfig.CommandCounterBits; i++)
             {
                 bool bit = (commandCounter & (1 << i)) != 0;
-                usbInterface.DigitalOutLine[RobotConfig.CommandCounterGroup, RobotConfig.CommandCounterStartPin + i] = bit;
+                lines.Add((RobotConfig.CommandCounterGroup, RobotConfig.CommandCounterStartPin + i, bit));
             }
+            pio.SetLines(lines);
+
+            // Diagnose: zeigt genau, welcher Wert auf welchen Linien rausgeht.
+            int last = RobotConfig.CommandCounterStartPin + RobotConfig.CommandCounterBits - 1;
+            Console.WriteLine($"  → Befehlszähler {commandCounter} (binär {Convert.ToString(commandCounter, 2).PadLeft(RobotConfig.CommandCounterBits, '0')}) " +
+                              $"auf Port {RobotConfig.CommandCounterGroup}, Linien {RobotConfig.CommandCounterStartPin}..{last}");
         }
 
         // Blockiert bis der Roboter denselben Befehlszählerwert zurückschickt.
         static void WaitForRobot()
         {
-            Console.WriteLine($"Warte auf Roboter-Bestätigung (Zähler={commandCounter})...");
+            Console.WriteLine($"Warte auf Roboter-Bestätigung (erwarte Zähler={commandCounter}, lese Port {RobotConfig.FeedbackGroup})...");
 
+            int polls = 0;
             while (true)
             {
                 int robotCounter = ReadFeedback();
@@ -226,11 +215,19 @@ namespace _3D_Vier_Gewinnt_Server
                     break;
                 }
 
+                // Alle ~1 s anzeigen, was tatsächlich von Port C gelesen wird –
+                // so siehst du, ob/welches Feedback ankommt (Hänger = kein Feedback).
+                if (polls % 20 == 0)
+                    Console.WriteLine($"  ... Feedback aktuell={robotCounter}, erwartet={commandCounter}");
+
+                polls++;
                 Thread.Sleep(50);
             }
         }
 
-        // Liest den Rückgabe-Befehlszähler vom Roboter (Group C).
+        // Liest den Rückgabe-Befehlszähler vom Roboter (Port C, Eingänge C/0..C/2).
+        // Port C bleibt nach dem Einschalten standardmäßig Input (Datenblatt), wird
+        // also nicht als Output konfiguriert. Nur im Vollbetrieb genutzt.
         static int ReadFeedback()
         {
             int value = 0;
@@ -248,12 +245,9 @@ namespace _3D_Vier_Gewinnt_Server
 
         static void ResetAll()
         {
-            for (int i = 0; i < 8; i++)
-            {
-                usbInterface.DigitalOutLine[RobotConfig.GroupA, i] = false;
-                usbInterface.DigitalOutLine[RobotConfig.GroupB, i] = false;
-            }
-
+            pio.ClearAll();
+            // Versorgung danach wieder einschalten – die muss immer HIGH bleiben.
+            pio.SetLine(RobotConfig.VersorgungGroup, RobotConfig.VersorgungPin, true);
             commandCounter = 0;
         }
     }

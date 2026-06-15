@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -12,11 +13,11 @@ namespace _3D_Vier_Gewinnt_Server
     {
         private const int WAIT_MS = 3000;
 
-        private static LIBADX.LIBADX usbInterface;
+        private static PioOutput pio;
 
-        public static void Run(LIBADX.LIBADX usb)
+        public static void Run(PioOutput pioOutput)
         {
-            usbInterface = usb;
+            pio = pioOutput;
 
             TcpListener server = new TcpListener(IPAddress.Any, 5000);
             server.Start();
@@ -36,49 +37,12 @@ namespace _3D_Vier_Gewinnt_Server
 
         static void HandleClient(TcpClient client)
         {
-            NetworkStream stream = client.GetStream();
-            byte[] buffer = new byte[1024];
+            // Liest zeilenweise (newline-getrennt) und ruft pro Zug ExecuteMove auf;
+            // schickt danach automatisch "DONE\n" zurück. Siehe MessageProtocol.
+            MessageProtocol.ServeMoves(client, "[Simple]", ExecuteMove);
 
-            while (true)
-            {
-                int bytesRead;
-                try
-                {
-                    bytesRead = stream.Read(buffer, 0, buffer.Length);
-                    if (bytesRead == 0) break;
-                }
-                catch { break; }
-
-                string message = Encoding.UTF8.GetString(buffer, 0, bytesRead);
-                Console.WriteLine("[Simple] Empfangen: " + message);
-
-                ProcessMessage(message);
-
-                byte[] response = Encoding.UTF8.GetBytes("DONE");
-                stream.Write(response, 0, response.Length);
-            }
-
-            client.Close();
             Console.WriteLine("[Simple] Client getrennt");
             ResetAll();
-        }
-
-        static void ProcessMessage(string message)
-        {
-            try
-            {
-                string[] parts = message.Split(',');
-                int x = int.Parse(parts[0]);
-                int y = int.Parse(parts[1]);
-                int player = int.Parse(parts[2]);
-
-                Console.WriteLine($"[Simple] X:{x} Y:{y} Player:{player}");
-                ExecuteMove(x, y, player);
-            }
-            catch
-            {
-                Console.WriteLine("[Simple] Fehler beim Parsen!");
-            }
         }
 
         static void ExecuteMove(int x, int y, int player)
@@ -101,51 +65,54 @@ namespace _3D_Vier_Gewinnt_Server
             Console.WriteLine("[Simple] Position AUS");
         }
 
-        // Player 1 (Grün):  DI[111]=OFF, DI[112]=OFF → kein Pin nötig
-        // Player 2 (Blöck): DI[111]=ON               → Group B Pin 2
+        // Player 1 (Grün):  EntnahmePos1+2 AUS                → kein Pin nötig
+        // Player 2 (Blöck): EntnahmePos1 AN (B/4, D-Sub 7)    → Fanuc 11
         static void SetEntnahme(int player)
         {
             if (player == 2)
             {
-                usbInterface.DigitalOutLine[RobotConfig.EntnahmeGroup, RobotConfig.EntnahmeBlockPin] = true;
-                Console.WriteLine("[Simple] Entnahme: Blöck (DI[111]=ON)");
+                pio.SetLine(RobotConfig.EntnahmeGroup, RobotConfig.EntnahmePos1Pin, true);
+                Console.WriteLine("[Simple] Entnahme: Blöck (EntnahmePos1 AN)");
             }
             else
             {
-                Console.WriteLine("[Simple] Entnahme: Grün (DI[111]=OFF, DI[112]=OFF)");
+                Console.WriteLine("[Simple] Entnahme: Grün (EntnahmePos1+2 AUS)");
             }
         }
 
         static void ClearEntnahme()
         {
-            usbInterface.DigitalOutLine[RobotConfig.EntnahmeGroup, RobotConfig.EntnahmeBlockPin] = false;
+            pio.SetLine(RobotConfig.EntnahmeGroup, RobotConfig.EntnahmePos1Pin, false);
         }
 
         static void SetPosition(int position)
         {
+            var lines = new List<(int, int, bool)>();
             for (int i = 0; i < RobotConfig.AblagePins.Length; i++)
             {
                 bool bit = (position & (1 << i)) != 0;
                 var (group, pin) = RobotConfig.AblagePins[i];
-                usbInterface.DigitalOutLine[group, pin] = bit;
+                lines.Add((group, pin, bit));
             }
+            // Alle Ablage-Bits in einem Rutsch setzen (pro Gruppe ein Hardware-Write).
+            pio.SetLines(lines);
 
             Console.WriteLine($"[Simple] Position gesetzt: {position} (binär: {Convert.ToString(position, 2).PadLeft(4, '0')})");
         }
 
         static void ClearPosition()
         {
+            var lines = new List<(int, int, bool)>();
             foreach (var (group, pin) in RobotConfig.AblagePins)
-                usbInterface.DigitalOutLine[group, pin] = false;
+                lines.Add((group, pin, false));
+            pio.SetLines(lines);
         }
 
         static void ResetAll()
         {
-            for (int i = 0; i < 8; i++)
-            {
-                usbInterface.DigitalOutLine[RobotConfig.GroupA, i] = false;
-                usbInterface.DigitalOutLine[RobotConfig.GroupB, i] = false;
-            }
+            pio.ClearAll();
+            // Versorgung Schalter muss immer HIGH bleiben.
+            pio.SetLine(RobotConfig.VersorgungGroup, RobotConfig.VersorgungPin, true);
         }
     }
 }
