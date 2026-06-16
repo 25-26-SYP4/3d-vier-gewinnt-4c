@@ -2,29 +2,28 @@ namespace _3D_Vier_Gewinnt_Server
 {
     /// <summary>
     /// Zentrale Konfiguration für alle USB-PIO Pins.
-    /// Belegung laut Lehrer-Tabelle "PinBelegungIOs4Gewinnt" (03.03.26).
     ///
     /// USB-PIO = bmcm, 25-pol. D-Sub. WICHTIG: logische Linie (Port/Bit) ≠ Stecker-Pin!
     /// Gruppen im Code: GroupA=Port A, GroupB=Port B, GroupC=Port C; Pin = Bit-Nr (0-7).
     ///
-    ///  Signal            Port/Bit   D-Sub-Pin   Fanuc
-    ///  Befehlszähler 1   A/0        16  (*)      4
-    ///  Befehlszähler 2   A/1         4  (*)      5
-    ///  Befehlszähler 4   A/2        17  (*)      6
-    ///  Ablage 1          B/0         5           7
-    ///  Ablage 2          B/1        18           8
-    ///  Ablage 4          B/2         6           9
-    ///  Ablage 8          B/3        19          10
-    ///  EntnahmePos1      B/4         7          11
-    ///  EntnahmePos2      B/5        20          12
-    ///  Versorgung (HIGH) B/6         8           -
-    ///  Masse             DGND       13          18
-    ///  Feedback          C/0,1,2    9,22,10      -   (Eingänge)
+    /// ACHTUNG: Zwischen D-Sub und Fanuc liegt ein um +2 verschobenes Kabel (am
+    /// Gerät gemessen 16.06.26: B/n → DI[109+n]). Die folgende Belegung ist bereits
+    /// so gewählt, dass am Roboter die richtigen DI[] ankommen (per Whiteboard-Muster
+    /// bestätigt für Ablage/Entnahme). Logische Linie → was der Roboter empfängt:
     ///
-    /// (*) KONFLIKT: Die Tabelle nennt für den Befehlszähler die Labels A/0,A/1,A/2,
-    ///     aber die D-Sub-Pins 16/4/17. Laut bmcm-Datenblatt sind 16/4/17 = A/5,A/6,A/7
-    ///     (A/0,A/1,A/2 lägen auf Pin 1,14,2). Beim Lehrer klären, welche BITS gesetzt
-    ///     werden sollen. Betrifft nur den Vollbetrieb (USE_COMMAND_COUNTER = true).
+    ///  Signal            Port/Bit   → Roboter
+    ///  Befehlszähler 1   A/0          DI[101]
+    ///  Befehlszähler 2   A/1          DI[102]
+    ///  Befehlszähler 4   A/2          DI[103]
+    ///  Ablage 1          A/6          DI[107]
+    ///  Ablage 2          A/7          DI[108]
+    ///  Ablage 4          B/0          DI[109]
+    ///  Ablage 8          B/1          DI[110]
+    ///  EntnahmePos1      B/2          DI[111]
+    ///  EntnahmePos2      B/3          DI[112]
+    ///  Versorgung (HIGH) B/6          (D-Sub 8, dauerhaft HIGH)
+    ///  Masse             DGND         (D-Sub 13)
+    ///  Feedback          C/0,1,2      Rück-Befehlszähler (Eingänge)
     /// </summary>
     public static class RobotConfig
     {
@@ -38,35 +37,68 @@ namespace _3D_Vier_Gewinnt_Server
         //   0x0000  oder  0x00FF
         public const int OutputDirectionMask = 0x0000;
 
-        // --- Befehlszähler (3 Bit) auf Port A ---  (nur Vollbetrieb, siehe (*) oben)
+        // --- Befehlszähler (3 Bit) auf Port A ---  (nur Vollbetrieb)
+        // Ziel laut Lehrer-Whiteboard: B1→DI[101], B2→DI[102], B4→DI[103].
+        // A/0,A/1,A/2 treffen das laut bestätigtem +2-Kabelmuster → StartPin = 0.
+        // (Die Alternative A/5-7 läge auf DI[106-108] und würde mit der Ablage
+        // A/6,A/7 kollidieren.) Diese Pins wurden noch nicht direkt am Roboter
+        // gemessen → im Vollbetrieb am Teach-Pendant gegenprüfen.
         public const int CommandCounterGroup = GroupA;
-        public const int CommandCounterStartPin = 0;        // oder 5
+        public const int CommandCounterStartPin = 0;
         public const int CommandCounterBits = 3;
 
-        // --- Ablage / Boardposition (4 Bit) auf Port B ---
+        // --- Ablage / Boardposition (4 Bit) ---
+        // Am Gerät gemessen (16.06.26): Port B kommt am Fanuc um +2 verschoben an
+        // (B/n → DI[109+n] statt DI[107+n]). Da B/0 schon die unterste Linie ist,
+        // sind Fanuc 7/8 (DI[107]/[108]) aus Port B NICHT erreichbar – die werden
+        // über den um +2 verschobenen Kabelstrang von den Linien getrieben, die die
+        // Tabelle für Fanuc 5/6 vorsieht (D-Sub 4 = A/6, D-Sub 17 = A/7).
+        // Anker ist der physische D-Sub-Pin: Soll-Fanuc − 2 = der D-Sub-Pin, der
+        // dieses Fanuc-DI tatsächlich treibt. So landet Bit0..3 auf DI[107..110].
+        // ANNAHME: der +2-Versatz gilt auch für die Port-A-Pins (D-Sub 4/17) – am
+        // Gerät nur für Port B direkt gemessen, daher mit einem Zug verifizieren.
         public static readonly (int group, int pin)[] AblagePins = new (int, int)[]
         {
-            (GroupB, 0),  // Ablage1 (1) → D-Sub 5  → Fanuc 7
-            (GroupB, 1),  // Ablage2 (2) → D-Sub 18 → Fanuc 8
-            (GroupB, 2),  // Ablage4 (4) → D-Sub 6  → Fanuc 9
-            (GroupB, 3),  // Ablage8 (8) → D-Sub 19 → Fanuc 10
+            (GroupA, 6),  // Ablage1 (1) → D-Sub 4  → +2 → Fanuc 7  → DI[107]
+            (GroupA, 7),  // Ablage2 (2) → D-Sub 17 → +2 → Fanuc 8  → DI[108]
+            (GroupB, 0),  // Ablage4 (4) → D-Sub 5  → +2 → Fanuc 9  → DI[109]
+            (GroupB, 1),  // Ablage8 (8) → D-Sub 18 → +2 → Fanuc 10 → DI[110]
         };
 
         // --- Entnahme (2 Bit) auf Port B ---
-        // Annahme (wie urspr. Lehrer-Notizen): Grün/Player1 = beide AUS,
-        // Blöck/Player2 = EntnahmePos1 AN. Genaue Kodierung ggf. beim Lehrer prüfen.
+        // Kodierung: Grün/Player1 = beide AUS, Blöck/Player2 = EntnahmePos1 AN.
+        // +2-Kabelversatz kompensiert (am Gerät gemessen, B/n → DI[109+n]):
+        // Pos1 auf B/2 → Fanuc 11 → DI[111], Pos2 auf B/3 → Fanuc 12 → DI[112].
         public const int EntnahmeGroup = GroupB;
-        public const int EntnahmePos1Pin = 4;  // D-Sub 7  → Fanuc 11
-        public const int EntnahmePos2Pin = 5;  // D-Sub 20 → Fanuc 12
+        public const int EntnahmePos1Pin = 2;  // B/2 → D-Sub 6  → +2 → Fanuc 11 → DI[111]
+        public const int EntnahmePos2Pin = 3;  // B/3 → D-Sub 19 → +2 → Fanuc 12 → DI[112]
 
         // --- Versorgung Schalter: dauerhaft HIGH ---
         public const int VersorgungGroup = GroupB;
         public const int VersorgungPin = 6;    // D-Sub 8
 
-        // --- Roboter-Feedback (3 Bit, EINGÄNGE) auf Port C ---
-        // Eigene Gruppe (Port C), getrennt von den Output-Linien → kein Konflikt mehr.
-        public const int FeedbackGroup = GroupC;
-        public const int FeedbackStartPin = 0;
-        public const int FeedbackBits = 3;
+        // --- Roboter-Feedback (Rück-Befehlszähler, EINGÄNGE) ---
+        // Port C bleibt nach dem Einschalten Input (Datenblatt) und wird nie als
+        // Output gesetzt → getrennt von den Output-Linien, kein Konflikt.
+        //
+        // NOCH NICHT GEMESSEN: auf WELCHEN Linien der Roboter die 3 Zähler-Bits
+        // zurückgibt. Der Rück-Pfad kann anders verdrahtet sein als der Hin-Pfad
+        // (der war ja um +2 verschoben). Deshalb hier PRO BIT die Eingangslinie
+        // frei einstellbar – einfach die (Gruppe, Pin)-Paare ändern und neu testen:
+        //   FeedbackPins[0] = Bit 0 (Wert 1) = Echo von DI[101]
+        //   FeedbackPins[1] = Bit 1 (Wert 2) = Echo von DI[102]
+        //   FeedbackPins[2] = Bit 2 (Wert 4) = Echo von DI[103]
+        // Beispiele zum Durchprobieren:
+        //   +2 verschoben:             (GroupC,2),(GroupC,3),(GroupC,4)
+        //   Bit-Reihenfolge umgedreht: (GroupC,2),(GroupC,1),(GroupC,0)
+        // Vorgehen: Zug ausführen → läuft er nach der Bestätigung weiter, stimmt die
+        // Zuordnung. Hängt er, Programm stoppen, hier ändern, neu bauen, erneut testen.
+        public const int FeedbackGroup = GroupC;   // nur für die Log-Ausgabe
+        public static readonly (int group, int pin)[] FeedbackPins = new (int, int)[]
+        {
+            (GroupC, 0),  // Bit 0 (Wert 1)
+            (GroupC, 1),  // Bit 1 (Wert 2)
+            (GroupC, 2),  // Bit 2 (Wert 4)
+        };
     }
 }

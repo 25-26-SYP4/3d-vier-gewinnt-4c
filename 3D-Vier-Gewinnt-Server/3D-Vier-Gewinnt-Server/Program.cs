@@ -20,7 +20,7 @@ namespace _3D_Vier_Gewinnt_Server
         // ── Modus wählen ──────────────────────────────────────────────────────
         // true  → MIT Befehlszähler + Handshake (Produktivbetrieb)
         // false → OHNE Befehlszähler, nur Pins setzen + Sleep (zum Testen)
-        const bool USE_COMMAND_COUNTER = false;
+        const bool USE_COMMAND_COUNTER = true;
         // ──────────────────────────────────────────────────────────────────────
 
 
@@ -100,40 +100,34 @@ namespace _3D_Vier_Gewinnt_Server
             int position = y * 4 + x;
             Console.WriteLine($"Position: {position}");
 
-            // ===== Schritt 1: Entnahme =====
-            // Entnahme-Pin setzen (bleibt AN solange der Roboter arbeitet)
+            // EIN Klick = EIN Befehl = ein kompletter Spielzug (Stein nehmen UND
+            // platzieren). Das ganze Muster wird EINMAL gemeinsam gesetzt:
+            //   - Entnahme        → DI[111]      (welcher Stein, je nach Spieler)
+            //   - Ablageposition  → DI[107..110] (4-Bit-Position)
+            //   - Befehlszähler   → DI[101..103] (zuletzt = Trigger für den Roboter)
+            // Erst die Datenleitungen setzen, den Befehlszähler als Letztes, damit
+            // die Daten beim Trigger schon stabil anliegen.
             SetEntnahme(player);
-
-            // Befehlszähler erhöhen und senden → Roboter startet Befehl
-            commandCounter = (commandCounter + 1) % 8;
-            SendCommandCounter();
-            Console.WriteLine($"[Entnahme] Befehlszähler gesendet: {commandCounter}");
-
-            // Warten bis Roboter denselben Zählerwert zurückschickt
-            WaitForRobot();
-
-            // Entnahme-Pin löschen (Stein wurde geholt)
-            ClearEntnahme();
-
-            // ===== Schritt 2: Ablage =====
-            // Position-Pins setzen (bleiben AN solange der Roboter arbeitet)
             SetPosition(position);
 
-            // Befehlszähler erhöhen und senden → Roboter fährt zur Position
             commandCounter = (commandCounter + 1) % 8;
             SendCommandCounter();
-            Console.WriteLine($"[Ablage] Befehlszähler gesendet: {commandCounter}");
+            Console.WriteLine($"[Befehl] gesendet: Zähler={commandCounter}, Position={position}, Player={player}");
 
-            // Warten bis Roboter bestätigt
+            // EINMAL warten, bis der Roboter denselben Befehlszähler zurückschickt.
+            // Solange blockiert das hier → ein neuer Spielzug ist erst nach der
+            // Bestätigung möglich (HandleClient liest die nächste Zeile erst danach).
             WaitForRobot();
 
-            // Position-Pins löschen (Stein wurde platziert)
+            // Spielzug fertig → alle Daten-Pins löschen, der Zähler bleibt stehen
+            // (er wechselt erst beim nächsten Befehl wieder).
+            ClearEntnahme();
             ClearPosition();
         }
 
         // Setzt den Entnahme-Pin je nach Spieler und lässt ihn AN.
-        // Player 1 (Grün):  EntnahmePos1+2 AUS                → kein Pin nötig
-        // Player 2 (Blöck): EntnahmePos1 AN (B/4, D-Sub 7)    → Fanuc 11
+        // Player 1 (Grün):  EntnahmePos1+2 AUS              → kein Pin nötig
+        // Player 2 (Blöck): EntnahmePos1 AN (B/2)           → DI[111]
         static void SetEntnahme(int player)
         {
             if (player == 2)
@@ -152,11 +146,11 @@ namespace _3D_Vier_Gewinnt_Server
             pio.SetLine(RobotConfig.EntnahmeGroup, RobotConfig.EntnahmePos1Pin, false);
         }
 
-        // Setzt die Board-Position als 4-Bit-Binärwert (Ablage, Port B).
-        // Bit 0 (1) → B/0 → D-Sub 5  → Fanuc 7
-        // Bit 1 (2) → B/1 → D-Sub 18 → Fanuc 8
-        // Bit 2 (4) → B/2 → D-Sub 6  → Fanuc 9
-        // Bit 3 (8) → B/3 → D-Sub 19 → Fanuc 10
+        // Setzt die Board-Position als 4-Bit-Binärwert (Ablage, siehe RobotConfig).
+        // Bit 0 (1) → A/6 → DI[107]
+        // Bit 1 (2) → A/7 → DI[108]
+        // Bit 2 (4) → B/0 → DI[109]
+        // Bit 3 (8) → B/1 → DI[110]
         static void SetPosition(int position)
         {
             var lines = new List<(int, int, bool)>();
@@ -216,28 +210,31 @@ namespace _3D_Vier_Gewinnt_Server
                     break;
                 }
 
-                // Alle ~1 s anzeigen, was tatsächlich von Port C gelesen wird –
-                // so siehst du, ob/welches Feedback ankommt (Hänger = kein Feedback).
-                if (polls % 20 == 0)
-                    Console.WriteLine($"  ... Feedback aktuell={robotCounter}, erwartet={commandCounter}");
+                // Alle ~3 s anzeigen, welcher Wert mit der aktuellen FeedbackPins-
+                // Zuordnung dekodiert wird. Hängt es hier dauerhaft (Wert ungleich
+                // erwartet): Programm stoppen, FeedbackPins in RobotConfig ändern,
+                // neu bauen und Zug wiederholen.
+                if (polls % 60 == 0)
+                    Console.WriteLine($"  ... Feedback={robotCounter}, erwartet={commandCounter}");
 
                 polls++;
                 Thread.Sleep(50);
             }
         }
 
-        // Liest den Rückgabe-Befehlszähler vom Roboter (Port C, Eingänge C/0..C/2).
-        // Port C bleibt nach dem Einschalten standardmäßig Input (Datenblatt), wird
+        // Liest den Rückgabe-Befehlszähler vom Roboter. Welche Eingangslinie für
+        // welches Bit steht, kommt aus RobotConfig.FeedbackPins (frei einstellbar
+        // zum Durchprobieren). Port C bleibt standardmäßig Input (Datenblatt), wird
         // also nicht als Output konfiguriert. Nur im Vollbetrieb genutzt.
         static int ReadFeedback()
         {
             int value = 0;
 
-            for (int i = 0; i < RobotConfig.FeedbackBits; i++)
+            for (int i = 0; i < RobotConfig.FeedbackPins.Length; i++)
             {
-                bool bit = usbInterface.DigitalInLine[RobotConfig.FeedbackGroup, RobotConfig.FeedbackStartPin + i];
+                var (group, pin) = RobotConfig.FeedbackPins[i];
 
-                if (bit)
+                if (usbInterface.DigitalInLine[group, pin])
                     value |= (1 << i);
             }
 
