@@ -23,6 +23,7 @@ namespace _3D_Vier_Gewinnt_Server
         const bool USE_COMMAND_COUNTER = false;
         // ──────────────────────────────────────────────────────────────────────
 
+
         static void Main(string[] args)
         {
             usbInterface = new LIBADX.LIBADX();
@@ -138,11 +139,11 @@ namespace _3D_Vier_Gewinnt_Server
             if (player == 2)
             {
                 pio.SetLine(RobotConfig.EntnahmeGroup, RobotConfig.EntnahmePos1Pin, true);
-                Console.WriteLine("Entnahme: Blöck (EntnahmePos1 AN)");
+                Console.WriteLine("Entnahme: Schwarz (EntnahmePos1 AN)");
             }
             else
             {
-                Console.WriteLine("Entnahme: Grün (EntnahmePos1+2 AUS)");
+                Console.WriteLine("Entnahme: Weiß (EntnahmePos1+2 AUS)");
             }
         }
 

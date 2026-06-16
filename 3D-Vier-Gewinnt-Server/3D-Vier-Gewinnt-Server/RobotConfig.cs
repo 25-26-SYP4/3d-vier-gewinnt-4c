@@ -40,7 +40,7 @@ namespace _3D_Vier_Gewinnt_Server
 
         // --- Befehlszähler (3 Bit) auf Port A ---  (nur Vollbetrieb, siehe (*) oben)
         public const int CommandCounterGroup = GroupA;
-        public const int CommandCounterStartPin = 0;
+        public const int CommandCounterStartPin = 0;        // oder 5
         public const int CommandCounterBits = 3;
 
         // --- Ablage / Boardposition (4 Bit) auf Port B ---

@@ -1,9 +1,11 @@
-using System.Collections;
+using System;
+using System.Net.Sockets;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using Object = UnityEngine.Object;
+using System.Collections;
 
 public class Game : MonoBehaviour
 {
@@ -26,7 +28,8 @@ public class Game : MonoBehaviour
 
     private bool waitingForRobot = false;
 
-    // Solange true, arbeitet der Roboter noch am letzten Zug → kein neuer Zug.
+    // Solange true, arbeitet der Roboter/Server noch am letzten Zug → kein neuer Zug.
+    // Der ClickSpawner liest das, um Klicks während der Roboter-Arbeit zu sperren.
     public bool IsWaitingForRobot => waitingForRobot;
 
     public bool useBackend = true;
@@ -54,16 +57,12 @@ public class Game : MonoBehaviour
 
     public bool TryMakeMove(int x, int y, int z)
     {
-        if (gameOver) return false;
-
-        // Solange der Roboter den vorigen Zug ausführt, keinen neuen Zug annehmen.
-        // Das verhindert, dass mehrere Nachrichten gleichzeitig an den Server gehen
-        // (sonst kommen sie zusammengeklebt an → "viel zu viele Parameter").
         if (waitingForRobot)
         {
             Debug.Log("Warte auf Roboter...");
             return false;
         }
+        if (gameOver) return false;
 
         Debug.Log("TryMakeMove aufgerufen");
         bool success = board.PlacePiece(x, y, z, currentPlayer);
@@ -73,31 +72,21 @@ public class Game : MonoBehaviour
             Debug.Log("Ungültiger Spielzug!");
             return false;
         }
+        if (useBackend)
+        {
+            waitingForRobot = true;
+            socket.Send(x, y, currentPlayer == Player.Player1 ? 1 : 2);
+            StartCoroutine(WaitForRobot());
+        }
 
         Debug.Log($"Spielzug: {currentPlayer} -> {x},{y},{z}");
 
-        bool won = board.CheckWin(currentPlayer);
-        if (won)
+        if (board.CheckWin(currentPlayer))
         {
             Debug.Log(currentPlayer + " hat gewonnen!");
             gameOver = true;
             HighlightWinningPieces();
             ShowEndScreen();
-        }
-
-        if (useBackend)
-        {
-            // Zug an den Server senden. Der Spielerwechsel passiert ERST, wenn der
-            // Roboter mit "DONE" bestätigt (siehe WaitForRobot) – nicht hier und
-            // nicht im ClickSpawner (sonst doppelter Wechsel!).
-            waitingForRobot = true;
-            socket.Send(x, y, currentPlayer == Player.Player1 ? 1 : 2);
-            StartCoroutine(WaitForRobot());
-        }
-        else if (!won)
-        {
-            // Ohne Backend gibt es kein "DONE" → direkt wechseln.
-            SwitchPlayer();
         }
 
         return true;
@@ -214,15 +203,7 @@ public class Game : MonoBehaviour
         if (response == "DONE")
         {
             waitingForRobot = false;
-
-            // Nach einem Gewinnzug nicht mehr wechseln.
-            if (!gameOver)
-                SwitchPlayer();
-        }
-        else
-        {
-            // Unerwartete Antwort: trotzdem entsperren, sonst hängt das Spiel.
-            waitingForRobot = false;
+            SwitchPlayer();
         }
     }
 }
