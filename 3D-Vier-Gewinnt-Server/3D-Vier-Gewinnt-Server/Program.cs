@@ -21,9 +21,13 @@ namespace _3D_Vier_Gewinnt_Server
         // true  → MIT Befehlszähler + Handshake (Produktivbetrieb)
         // false → OHNE Befehlszähler, nur Pins setzen + Sleep (zum Testen)
         const bool USE_COMMAND_COUNTER = true;
+
+        // true  → WPF-Testfenster öffnen (Bits manuell setzen, Schalter als Feedback)
+        // false → normaler TCP-Server-Betrieb
+        const bool USE_TEST_UI = false;
         // ──────────────────────────────────────────────────────────────────────
 
-
+        [STAThread]
         static void Main(string[] args)
         {
             usbInterface = new LIBADX.LIBADX();
@@ -54,6 +58,14 @@ namespace _3D_Vier_Gewinnt_Server
             // Versorgung Schalter dauerhaft HIGH. Bleibt durch das Schatten-Byte
             // erhalten, auch wenn Ablage/Entnahme-Pins wechseln.
             pio.SetLine(RobotConfig.VersorgungGroup, RobotConfig.VersorgungPin, true);
+
+            if (USE_TEST_UI)
+            {
+                Console.WriteLine("Modus: WPF Test-UI");
+                var app = new System.Windows.Application();
+                app.Run(new TestWindow(pio, usbInterface));
+                return;
+            }
 
             if (USE_COMMAND_COUNTER)
             {
