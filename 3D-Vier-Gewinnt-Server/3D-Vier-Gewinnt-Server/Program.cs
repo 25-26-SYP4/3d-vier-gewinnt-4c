@@ -12,6 +12,17 @@ namespace _3D_Vier_Gewinnt_Server
         // Befehlszähler läuft 0-7 (3 Bit → DI[101, 102, 103])
         static int commandCounter = 0;
 
+        // ── Handshake-Parameter ───────────────────────────────────────────────
+        // Die Rückmeldung wird entprellt (muss mehrmals stabil anliegen) und mit
+        // Flanken-Erkennung + Timeout abgesichert, damit ein einzelner Stör-/
+        // Floating-Wert auf Port C nicht zu früh als Bestätigung gilt.
+        const int PollIntervalMs      = 50;
+        const int FeedbackStableReads = 5;      // Echo muss 5× (≈250 ms) stabil sein
+        const int FeedbackTimeoutMs   = 30000;  // max. Wartezeit pro Zug
+
+        enum RobotResult { Confirmed, TimedOut }
+        // ──────────────────────────────────────────────────────────────────────
+
         static LIBADX.LIBADX usbInterface;
 
         // Kapselt die digitalen Ausgänge (schreibt immer ganze Gruppen-Bytes).
@@ -117,12 +128,19 @@ namespace _3D_Vier_Gewinnt_Server
             // EINMAL warten, bis der Roboter denselben Befehlszähler zurückschickt.
             // Solange blockiert das hier → ein neuer Spielzug ist erst nach der
             // Bestätigung möglich (HandleClient liest die nächste Zeile erst danach).
-            if (WaitForRobot())
+            if (WaitForRobot() == RobotResult.Confirmed)
             {
                 // Spielzug fertig → alle Daten-Pins löschen, der Zähler bleibt stehen
                 // (er wechselt erst beim nächsten Befehl wieder).
                 ClearEntnahme();
                 ClearPosition();
+            }
+            else
+            {
+                // Zug wurde nicht (stabil) bestätigt – bewusste Entscheidung statt
+                // Hängen: Daten-Pins NICHT löschen, damit ein noch laufender Zug die
+                // Entnahme/Ablage weiter anliegen hat. Fehler sichtbar machen.
+                Console.WriteLine("WARNUNG: Zug nicht bestätigt (Timeout) – Daten-Pins NICHT gelöscht.");
             }
         }
 
@@ -195,23 +213,66 @@ namespace _3D_Vier_Gewinnt_Server
                               $"auf Port {RobotConfig.CommandCounterGroup}, Linien {RobotConfig.CommandCounterStartPin}..{last}");
         }
 
-        // Blockiert bis der Roboter denselben Befehlszählerwert zurückschickt.
-        static bool WaitForRobot()
+        // Wartet auf die Bestätigung des Roboters (Echo des Befehlszählers).
+        //
+        // Drei Absicherungen gegen "zu früh / nicht richtig":
+        //  1. Flanken-Erkennung (sawBusy): es wird erst akzeptiert, nachdem das
+        //     Feedback mindestens einmal ≠ commandCounter war. So gilt ein von
+        //     Anfang an zufällig passender (floatender) Pegel NICHT sofort.
+        //  2. Entprellung (FeedbackStableReads): der Zielwert muss mehrmals
+        //     hintereinander stabil anliegen, ein einzelner Glitch reicht nicht.
+        //  3. Timeout (begrenzte for-Schleife statt while(true)): hängt nie ewig,
+        //     sondern meldet nach FeedbackTimeoutMs einen TimedOut.
+        static RobotResult WaitForRobot()
         {
-            int polls = 0;
-            while (true)
+            int stableCount = 0;
+            bool sawBusy = false;
+            int maxPolls = FeedbackTimeoutMs / PollIntervalMs;
+
+            for (int poll = 0; poll < maxPolls; poll++)
             {
                 int robotCounter = ReadFeedback();
-                if (robotCounter == commandCounter)
+
+                if (robotCounter != commandCounter)
                 {
-                    Console.WriteLine("Roboter hat bestätigt!");
-                    return true;
+                    // Roboter ist noch dran / hält alten Wert → echte Flanke gesehen.
+                    sawBusy = true;
+                    stableCount = 0;
                 }
-                if (polls % 60 == 0)
-                    Console.WriteLine($"  ... Feedback={robotCounter}, erwartet={commandCounter}");
-                polls++;
-                Thread.Sleep(50);
+                else if (sawBusy)
+                {
+                    // Zielwert UND vorher echte Flanke → jetzt auf Stabilität prüfen.
+                    stableCount++;
+                    if (stableCount >= FeedbackStableReads)
+                    {
+                        Console.WriteLine("Roboter hat bestätigt (stabil).");
+                        return RobotResult.Confirmed;
+                    }
+                }
+
+                if (poll % 60 == 0)
+                {
+                    Console.WriteLine($"  ... Feedback={robotCounter}, erwartet={commandCounter}, stabil={stableCount}, sawBusy={sawBusy}");
+                    LogPortCRaw("warten");
+                }
+
+                Thread.Sleep(PollIntervalMs);
             }
+
+            Console.WriteLine("TIMEOUT: keine stabile Bestätigung vom Roboter.");
+            return RobotResult.TimedOut;
+        }
+
+        // TEMPORÄRER Mess-Helfer: protokolliert alle 8 Port-C-Linien roh, damit man
+        // am Teach-Lauf sieht, welche Pins beim Roboter-Echo tatsächlich auf den
+        // gesendeten Zählerwert kippen. Damit lässt sich RobotConfig.FeedbackPins
+        // (aktuell ungemessen) korrekt belegen. Nach dem Ausmessen wieder entfernen.
+        static void LogPortCRaw(string when)
+        {
+            var sb = new StringBuilder($"[PortC {when}] ");
+            for (int pin = 0; pin < 8; pin++)
+                sb.Append($"C/{pin}={(usbInterface.DigitalInLine[RobotConfig.GroupC, pin] ? 1 : 0)} ");
+            Console.WriteLine(sb.ToString());
         }
 
         // Liest den Rückgabe-Befehlszähler vom Roboter. Welche Eingangslinie für

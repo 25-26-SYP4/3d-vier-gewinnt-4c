@@ -81,24 +81,19 @@ namespace _3D_Vier_Gewinnt_Server
         // Port C bleibt nach dem Einschalten Input (Datenblatt) und wird nie als
         // Output gesetzt → getrennt von den Output-Linien, kein Konflikt.
         //
-        // NOCH NICHT GEMESSEN: auf WELCHEN Linien der Roboter die 3 Zähler-Bits
-        // zurückgibt. Der Rück-Pfad kann anders verdrahtet sein als der Hin-Pfad
-        // (der war ja um +2 verschoben). Deshalb hier PRO BIT die Eingangslinie
-        // frei einstellbar – einfach die (Gruppe, Pin)-Paare ändern und neu testen:
-        //   FeedbackPins[0] = Bit 0 (Wert 1) = Echo von DI[101]
-        //   FeedbackPins[1] = Bit 1 (Wert 2) = Echo von DI[102]
-        //   FeedbackPins[2] = Bit 2 (Wert 4) = Echo von DI[103]
-        // Beispiele zum Durchprobieren:
-        //   +2 verschoben:             (GroupC,2),(GroupC,3),(GroupC,4)
-        //   Bit-Reihenfolge umgedreht: (GroupC,2),(GroupC,1),(GroupC,0)
-        // Vorgehen: Zug ausführen → läuft er nach der Bestätigung weiter, stimmt die
-        // Zuordnung. Hängt er, Programm stoppen, hier ändern, neu bauen, erneut testen.
+        // Belegung (laut Lehrer-Whiteboard bestätigt, 17.06.26): der Roboter gibt
+        // den Rück-Befehlszähler auf Port C, Linien C/0..C/2 zurück; diese
+        // entsprechen DI[102..104]. LSB zuerst:
+        //   FeedbackPins[0] = Bit 0 (Wert 1) = C/0 → DI[102]
+        //   FeedbackPins[1] = Bit 1 (Wert 2) = C/1 → DI[103]
+        //   FeedbackPins[2] = Bit 2 (Wert 4) = C/2 → DI[104]
+        // Mit einem Zug am Gerät gegenprüfen (LogPortCRaw zeigt, welche C/x kippen).
         public const int FeedbackGroup = GroupC;   // nur für die Log-Ausgabe
         public static readonly (int group, int pin)[] FeedbackPins = new (int, int)[]
         {
-            (GroupC, 1),  // Bit 0 (Wert 1)
-            (GroupC, 2),  // Bit 1 (Wert 2)
-            (GroupC, 3),  // Bit 2 (Wert 4)
+            (GroupC, 0),  // Bit 0 (Wert 1) → DI[102]
+            (GroupC, 1),  // Bit 1 (Wert 2) → DI[103]
+            (GroupC, 2),  // Bit 2 (Wert 4) → DI[104]
         };
     }
 }
