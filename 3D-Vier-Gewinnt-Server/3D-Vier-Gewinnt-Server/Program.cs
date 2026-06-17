@@ -117,12 +117,13 @@ namespace _3D_Vier_Gewinnt_Server
             // EINMAL warten, bis der Roboter denselben Befehlszähler zurückschickt.
             // Solange blockiert das hier → ein neuer Spielzug ist erst nach der
             // Bestätigung möglich (HandleClient liest die nächste Zeile erst danach).
-            WaitForRobot();
-
-            // Spielzug fertig → alle Daten-Pins löschen, der Zähler bleibt stehen
-            // (er wechselt erst beim nächsten Befehl wieder).
-            ClearEntnahme();
-            ClearPosition();
+            if (WaitForRobot())
+            {
+                // Spielzug fertig → alle Daten-Pins löschen, der Zähler bleibt stehen
+                // (er wechselt erst beim nächsten Befehl wieder).
+                ClearEntnahme();
+                ClearPosition();
+            }
         }
 
         // Setzt den Entnahme-Pin je nach Spieler und lässt ihn AN.
@@ -195,28 +196,19 @@ namespace _3D_Vier_Gewinnt_Server
         }
 
         // Blockiert bis der Roboter denselben Befehlszählerwert zurückschickt.
-        static void WaitForRobot()
+        static bool WaitForRobot()
         {
-            Console.WriteLine($"Warte auf Roboter-Bestätigung (erwarte Zähler={commandCounter}, lese Port {RobotConfig.FeedbackGroup})...");
-
             int polls = 0;
             while (true)
             {
                 int robotCounter = ReadFeedback();
-
                 if (robotCounter == commandCounter)
                 {
                     Console.WriteLine("Roboter hat bestätigt!");
-                    break;
+                    return true;
                 }
-
-                // Alle ~3 s anzeigen, welcher Wert mit der aktuellen FeedbackPins-
-                // Zuordnung dekodiert wird. Hängt es hier dauerhaft (Wert ungleich
-                // erwartet): Programm stoppen, FeedbackPins in RobotConfig ändern,
-                // neu bauen und Zug wiederholen.
                 if (polls % 60 == 0)
                     Console.WriteLine($"  ... Feedback={robotCounter}, erwartet={commandCounter}");
-
                 polls++;
                 Thread.Sleep(50);
             }

@@ -96,9 +96,9 @@ namespace _3D_Vier_Gewinnt_Server
         public const int FeedbackGroup = GroupC;   // nur für die Log-Ausgabe
         public static readonly (int group, int pin)[] FeedbackPins = new (int, int)[]
         {
-            (GroupC, 0),  // Bit 0 (Wert 1)
-            (GroupC, 1),  // Bit 1 (Wert 2)
-            (GroupC, 2),  // Bit 2 (Wert 4)
+            (GroupC, 1),  // Bit 0 (Wert 1)
+            (GroupC, 2),  // Bit 1 (Wert 2)
+            (GroupC, 3),  // Bit 2 (Wert 4)
         };
     }
 }
