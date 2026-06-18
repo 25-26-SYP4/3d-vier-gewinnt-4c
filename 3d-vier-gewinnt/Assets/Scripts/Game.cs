@@ -93,14 +93,16 @@ public class Game : MonoBehaviour
     {
         if (active)
         {
-            panel.color = new Color(55f / 255, 55f / 255, 55f / 255, 100f);
+            // Volle Helligkeit, damit die Metallplatte/Emblem klar sichtbar ist
+            panel.color = new Color(1f, 1f, 1f, 1f);
             text.color = Color.white;
-            panel.transform.localScale = Vector3.one * 1.1f;
+            panel.transform.localScale = Vector3.one * 1.12f;
         }
         else
         {
-            panel.color = new Color(55f/255, 55f/255, 55f / 255, 0.3f);
-            text.color = Color.gray;
+            // Abgedunkelt + leicht transparent fuer den inaktiven Spieler
+            panel.color = new Color(0.55f, 0.55f, 0.55f, 0.55f);
+            text.color = new Color(0.7f, 0.7f, 0.7f, 1f);
             panel.transform.localScale = Vector3.one;
         }
     }
@@ -130,11 +132,17 @@ public class Game : MonoBehaviour
             {
                 if (piece != null)
                 {
-                    Renderer r = piece.GetComponent<Renderer>();
-                    if (r != null)
+                    // Fass-Sprite (Billboard) einfaerben
+                    SpriteRenderer sr = piece.GetComponentInChildren<SpriteRenderer>();
+                    if (sr != null)
                     {
-                        Renderer renderer = piece.GetComponent<Renderer>();
-                        renderer.material.color = new Color(1f, 0.84f, 0f);
+                        sr.color = new Color(1f, 0.84f, 0f);
+                    }
+                    else
+                    {
+                        Renderer r = piece.GetComponent<Renderer>();
+                        if (r != null)
+                            r.material.color = new Color(1f, 0.84f, 0f);
                     }
                 }
             }
@@ -164,8 +172,9 @@ public class Game : MonoBehaviour
         if (response == "DONE")
         {
             waitingForRobot = false;
-
-            SwitchPlayer();
+            // Hinweis: Spielerwechsel passiert in ClickSpawner (SpawnPieceOnPole),
+            // damit es zuverlaessig abwechselt. Frueher wurde hier ZUSAETZLICH
+            // SwitchPlayer() aufgerufen -> doppelter Wechsel -> blieb beim selben Spieler.
         }
 
         yield break;
