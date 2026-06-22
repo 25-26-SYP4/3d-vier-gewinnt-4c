@@ -97,7 +97,7 @@ namespace _3D_Vier_Gewinnt_Server
 
         static void ExecuteMove(int x, int y, int player)
         {
-            int position = y * 4 + x;
+            int position = x * 4 + y;
             Console.WriteLine($"Position: {position}");
 
             // EIN Klick = EIN Befehl = ein kompletter Spielzug (Stein nehmen UND
