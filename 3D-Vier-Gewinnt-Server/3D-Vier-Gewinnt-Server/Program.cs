@@ -137,6 +137,7 @@ namespace _3D_Vier_Gewinnt_Server
             }
             else
             {
+                ClearEntnahme();
                 // Zug wurde nicht (stabil) bestätigt – bewusste Entscheidung statt
                 // Hängen: Daten-Pins NICHT löschen, damit ein noch laufender Zug die
                 // Entnahme/Ablage weiter anliegen hat. Fehler sichtbar machen.
@@ -253,7 +254,7 @@ namespace _3D_Vier_Gewinnt_Server
                 if (poll % 60 == 0)
                 {
                     Console.WriteLine($"  ... Feedback={robotCounter}, erwartet={commandCounter}, stabil={stableCount}, sawBusy={sawBusy}");
-                    LogPortCRaw("warten");
+                    //LogPortCRaw("warten");
                 }
 
                 Thread.Sleep(PollIntervalMs);
