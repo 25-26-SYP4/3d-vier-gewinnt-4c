@@ -47,7 +47,7 @@ namespace _3D_Vier_Gewinnt_Server
 
         static void ExecuteMove(int x, int y, int player)
         {
-            int position = y * RobotConfig.BoardWidth + x;
+            int position = x * RobotConfig.BoardWidth + y;
             Console.WriteLine($"[Simple] Position: {position}");
 
             // ===== Schritt 1: Entnahme =====

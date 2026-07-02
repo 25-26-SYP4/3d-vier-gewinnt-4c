@@ -108,7 +108,7 @@ namespace _3D_Vier_Gewinnt_Server
 
         static void ExecuteMove(int x, int y, int player)
         {
-            int position = y * RobotConfig.BoardWidth + x;
+            int position = x * RobotConfig.BoardWidth + y;
             Console.WriteLine($"Position: {position}");
 
             // EIN Klick = EIN Befehl = ein kompletter Spielzug (Stein nehmen UND
@@ -256,59 +256,6 @@ namespace _3D_Vier_Gewinnt_Server
                     Console.WriteLine($"  ... Feedback={robotCounter}, erwartet={commandCounter}, stabil={stableCount}, sawBusy={sawBusy}");
                 }
 
-                Thread.Sleep(PollIntervalMs);
-            }
-
-            Console.WriteLine("TIMEOUT: keine stabile Bestätigung vom Roboter.");
-            return RobotResult.TimedOut;
-        }
-
-        // Wie WaitForRobot, aber mit echter Flanken-Erkennung IN den Zielwert hinein
-        // statt der sawBusy-Logik. Schließt den Spalt, dass ein von Anfang an (floatend/
-        // zufällig) passender Pegel sofort als Bestätigung gilt: es wird NUR bestätigt,
-        // nachdem ein Übergang von "!= commandCounter" auf "== commandCounter" wirklich
-        // beobachtet wurde.
-        static RobotResult WaitForRobot2()
-        {
-            int stableCount = 0;
-
-            // Baseline VOR der Schleife: der Wert, den der Roboter noch vom vorherigen
-            // Befehl hält. Durch den +1-Zähler ist dieser garantiert != commandCounter,
-            // solange der Roboter den neuen Befehl noch nicht bestätigt hat.
-            int previous = ReadFeedback();
-
-            bool sawEdgeIntoTarget = false;
-            int maxPolls = FeedbackTimeoutMs / PollIntervalMs;
-
-            for (int poll = 0; poll < maxPolls; poll++)
-            {
-                int current = ReadFeedback();
-
-                // Flanke: Übergang von "nicht Zielwert" auf "Zielwert".
-                if (current == commandCounter && previous != commandCounter)
-                    sawEdgeIntoTarget = true;
-
-                if (sawEdgeIntoTarget && current == commandCounter)
-                {
-                    // Zielwert nach echter Flanke → auf Stabilität prüfen.
-                    stableCount++;
-                    if (stableCount >= FeedbackStableReads)
-                    {
-                        Console.WriteLine("Roboter hat bestätigt (stabil).");
-                        return RobotResult.Confirmed;
-                    }
-                }
-                else
-                {
-                    stableCount = 0;
-                }
-
-                if (poll % LogEveryNPolls == 0)
-                {
-                    Console.WriteLine($"  ... Feedback={current}, erwartet={commandCounter}, stabil={stableCount}, flanke={sawEdgeIntoTarget}");
-                }
-
-                previous = current;
                 Thread.Sleep(PollIntervalMs);
             }
 
