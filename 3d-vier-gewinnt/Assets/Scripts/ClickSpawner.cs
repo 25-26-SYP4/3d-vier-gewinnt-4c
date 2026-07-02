@@ -24,6 +24,13 @@ public class ClickSpawner : MonoBehaviour
 
     private bool canPlace = true;
 
+    // Dauerhafte Meldungen (bleiben stehen, bis sich der Zustand ändert):
+    //   winnerMessage  → Sieger, höchste Priorität, bleibt bis zum Reset
+    //   Roboter-Warten → solange gameManager.IsWaitingForRobot
+    // Temporäre Meldungen (z. B. "Stab ist voll!") laufen weiter über ShowMessage.
+    private string winnerMessage = null;
+    private bool persistentActive = false;
+
     private void Awake()
     {
         spawnedPieces = new Dictionary<Vector3Int, GameObject>();
@@ -37,6 +44,8 @@ public class ClickSpawner : MonoBehaviour
 
     void Update()
     {
+        UpdateStatusMessage();
+
         if (Input.GetMouseButtonDown(0))
         {
             Ray ray = Camera.ScreenPointToRay(Input.mousePosition);
@@ -59,9 +68,9 @@ public class ClickSpawner : MonoBehaviour
         if (!canPlace) return;
 
         // Während der Roboter den vorigen Zug ausführt, keinen neuen Stein setzen.
+        // Die Dauer-Meldung dazu zeigt UpdateStatusMessage automatisch an.
         if (gameManager.IsWaitingForRobot)
         {
-            ShowMessage("Warte auf Roboter...");
             return;
         }
 
@@ -164,12 +173,50 @@ public class ClickSpawner : MonoBehaviour
             }
         }
     }
+    // Legt fest, welche DAUERHAFTE Meldung angezeigt wird. Priorität:
+    //   1. Sieger  2. "Roboter führt Zug aus"  3. keine (dann dürfen temporäre
+    //   Meldungen wie "Stab ist voll!" die Anzeige selbst steuern).
+    private void UpdateStatusMessage()
+    {
+        string persistent = null;
+
+        if (winnerMessage != null)
+            persistent = winnerMessage;
+        else if (gameManager != null && gameManager.IsWaitingForRobot)
+            persistent = "Roboter führt den Zug aus … bitte warten";
+
+        if (persistent != null)
+        {
+            // Dauer-Meldung erzwingen und ein evtl. laufendes Ausblenden stoppen.
+            persistentActive = true;
+            CancelInvoke(nameof(HideMessage));
+            messageText.text = persistent;
+            messageGroup.alpha = 1f;
+        }
+        else if (persistentActive)
+        {
+            // Gerade aus dem Dauer-Zustand herausgekommen → Meldung ausblenden.
+            persistentActive = false;
+            messageGroup.alpha = 0f;
+        }
+    }
+
+    // Zeigt dauerhaft den Sieger an. Bleibt bis zum Reset stehen.
+    public void ShowWinner(Player player)
+    {
+        winnerMessage = (player == Player.Player1 ? "Spieler 1" : "Spieler 2") + " hat gewonnen!";
+    }
+
+    // Temporäre Meldung (blendet nach 2 s wieder aus). Wird ignoriert, solange eine
+    // Dauer-Meldung (Sieger / Roboter) aktiv ist, damit nichts überschrieben wird.
     public void ShowMessage(string message)
     {
+        if (persistentActive) return;
+
         messageText.text = message;
         messageGroup.alpha = 1f;
 
-        CancelInvoke();
+        CancelInvoke(nameof(HideMessage));
         Invoke(nameof(HideMessage), 2f);
     }
 

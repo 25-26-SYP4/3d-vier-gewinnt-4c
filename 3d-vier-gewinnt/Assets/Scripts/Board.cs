@@ -76,7 +76,8 @@ public class Board
                                 directions[d, 1],
                                 directions[d, 2]))
                         {
-                            Object.FindFirstObjectByType<Game>().ShowEndScreen();
+                            // Nur Spiellogik: reines bool. Die Anzeige des Siegers
+                            // übernimmt ausschließlich Game (siehe TryMakeMove).
                             return true;
                         }
                     }
