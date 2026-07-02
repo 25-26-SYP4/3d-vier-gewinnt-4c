@@ -32,6 +32,15 @@ namespace _3D_Vier_Gewinnt_Server
         public const int GroupB = 2;
         public const int GroupC = 3;
 
+        // Eine USB-PIO Gruppe (Port) hat 8 digitale Linien (Bit 0..7).
+        public const int PinsPerPort = 8;
+
+        // Brettbreite (Spalten pro Reihe). Position = y * BoardWidth + x.
+        public const int BoardWidth = 4;
+
+        // TCP-Port, auf dem der Server auf Unity-Verbindungen lauscht.
+        public const int ServerPort = 5000;
+
         // --- Richtung der Output-Gruppen (DigitalDirection) ---
         // Polarität ist hardware-abhängig → am Gerät verifizieren (Server mit "diag").
         //   0x0000  oder  0x00FF
@@ -57,7 +66,7 @@ namespace _3D_Vier_Gewinnt_Server
         // dieses Fanuc-DI tatsächlich treibt. So landet Bit0..3 auf DI[107..110].
         // ANNAHME: der +2-Versatz gilt auch für die Port-A-Pins (D-Sub 4/17) – am
         // Gerät nur für Port B direkt gemessen, daher mit einem Zug verifizieren.
-        public static readonly (int group, int pin)[] AblagePins = new (int, int)[]
+        public static readonly (int group, int pin)[] PlacementPins = new (int, int)[]
         {
             (GroupA, 6),  // Ablage1 (1) → D-Sub 4  → +2 → Fanuc 7  → DI[107]
             (GroupA, 7),  // Ablage2 (2) → D-Sub 17 → +2 → Fanuc 8  → DI[108]
@@ -69,13 +78,13 @@ namespace _3D_Vier_Gewinnt_Server
         // Kodierung: Grün/Player1 = beide AUS, Blöck/Player2 = EntnahmePos1 AN.
         // +2-Kabelversatz kompensiert (am Gerät gemessen, B/n → DI[109+n]):
         // Pos1 auf B/2 → Fanuc 11 → DI[111], Pos2 auf B/3 → Fanuc 12 → DI[112].
-        public const int EntnahmeGroup = GroupB;
-        public const int EntnahmePos1Pin = 2;  // B/2 → D-Sub 6  → +2 → Fanuc 11 → DI[111]
-        public const int EntnahmePos2Pin = 3;  // B/3 → D-Sub 19 → +2 → Fanuc 12 → DI[112]
+        public const int PickupGroup = GroupB;
+        public const int PickupPos1Pin = 2;  // B/2 → D-Sub 6  → +2 → Fanuc 11 → DI[111]
+        public const int PickupPos2Pin = 3;  // B/3 → D-Sub 19 → +2 → Fanuc 12 → DI[112]
 
         // --- Versorgung Schalter: dauerhaft HIGH ---
-        public const int VersorgungGroup = GroupB;
-        public const int VersorgungPin = 6;    // D-Sub 8
+        public const int PowerSupplyGroup = GroupB;
+        public const int PowerSupplyPin = 6;    // D-Sub 8
 
         // --- Roboter-Feedback (Rück-Befehlszähler, EINGÄNGE) ---
         // Port C bleibt nach dem Einschalten Input (Datenblatt) und wird nie als
@@ -87,7 +96,7 @@ namespace _3D_Vier_Gewinnt_Server
         //   FeedbackPins[0] = Bit 0 (Wert 1) = C/0 → DI[102]
         //   FeedbackPins[1] = Bit 1 (Wert 2) = C/1 → DI[103]
         //   FeedbackPins[2] = Bit 2 (Wert 4) = C/2 → DI[104]
-        // Mit einem Zug am Gerät gegenprüfen (LogPortCRaw zeigt, welche C/x kippen).
+        
         public const int FeedbackGroup = GroupC;   // nur für die Log-Ausgabe
         public static readonly (int group, int pin)[] FeedbackPins = new (int, int)[]
         {

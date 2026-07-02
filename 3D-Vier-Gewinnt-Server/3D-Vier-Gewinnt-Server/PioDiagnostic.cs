@@ -45,11 +45,11 @@ namespace _3D_Vier_Gewinnt_Server
                     usb.DigitalOut[group] = 0x00;
 
                     // Methode B: jede Linie einzeln einschalten.
-                    for (int pin = 0; pin < 8; pin++)
+                    for (int pin = 0; pin < RobotConfig.PinsPerPort; pin++)
                         usb.DigitalOutLine[group, pin] = true;
                     LogIfError(usb, $"DigitalOutLine[{group},0..7]=true");
                     Pause($"Gruppe {group} | dir 0x{dir:X4} | DigitalOutLine 0..7  → leuchten alle 8 LEDs? Enter...");
-                    for (int pin = 0; pin < 8; pin++)
+                    for (int pin = 0; pin < RobotConfig.PinsPerPort; pin++)
                         usb.DigitalOutLine[group, pin] = false;
                 }
             }

@@ -19,10 +19,10 @@ namespace _3D_Vier_Gewinnt_Server
         {
             pio = pioOutput;
 
-            TcpListener server = new TcpListener(IPAddress.Any, 5000);
+            TcpListener server = new TcpListener(IPAddress.Any, RobotConfig.ServerPort);
             server.Start();
 
-            Console.WriteLine("[Simple] Server läuft auf Port 5000...");
+            Console.WriteLine($"[Simple] Server läuft auf Port {RobotConfig.ServerPort}...");
 
             while (true)
             {
@@ -47,14 +47,14 @@ namespace _3D_Vier_Gewinnt_Server
 
         static void ExecuteMove(int x, int y, int player)
         {
-            int position = y * 4 + x;
+            int position = y * RobotConfig.BoardWidth + x;
             Console.WriteLine($"[Simple] Position: {position}");
 
             // ===== Schritt 1: Entnahme =====
-            SetEntnahme(player);
+            SetPickup(player);
             Console.WriteLine($"[Simple] Entnahme AN – warte {WAIT_MS}ms...");
             Thread.Sleep(WAIT_MS);
-            ClearEntnahme();
+            ClearPickup();
             Console.WriteLine("[Simple] Entnahme AUS");
 
             // ===== Schritt 2: Ablage =====
@@ -67,11 +67,11 @@ namespace _3D_Vier_Gewinnt_Server
 
         // Player 1 (Grün):  EntnahmePos1+2 AUS                → kein Pin nötig
         // Player 2 (Blöck): EntnahmePos1 AN (B/4, D-Sub 7)    → Fanuc 11
-        static void SetEntnahme(int player)
+        static void SetPickup(int player)
         {
             if (player == 2)
             {
-                pio.SetLine(RobotConfig.EntnahmeGroup, RobotConfig.EntnahmePos1Pin, true);
+                pio.SetLine(RobotConfig.PickupGroup, RobotConfig.PickupPos1Pin, true);
                 Console.WriteLine("[Simple] Entnahme: Blöck (EntnahmePos1 AN)");
             }
             else
@@ -80,30 +80,30 @@ namespace _3D_Vier_Gewinnt_Server
             }
         }
 
-        static void ClearEntnahme()
+        static void ClearPickup()
         {
-            pio.SetLine(RobotConfig.EntnahmeGroup, RobotConfig.EntnahmePos1Pin, false);
+            pio.SetLine(RobotConfig.PickupGroup, RobotConfig.PickupPos1Pin, false);
         }
 
         static void SetPosition(int position)
         {
             var lines = new List<(int, int, bool)>();
-            for (int i = 0; i < RobotConfig.AblagePins.Length; i++)
+            for (int i = 0; i < RobotConfig.PlacementPins.Length; i++)
             {
                 bool bit = (position & (1 << i)) != 0;
-                var (group, pin) = RobotConfig.AblagePins[i];
+                var (group, pin) = RobotConfig.PlacementPins[i];
                 lines.Add((group, pin, bit));
             }
             // Alle Ablage-Bits in einem Rutsch setzen (pro Gruppe ein Hardware-Write).
             pio.SetLines(lines);
 
-            Console.WriteLine($"[Simple] Position gesetzt: {position} (binär: {Convert.ToString(position, 2).PadLeft(4, '0')})");
+            Console.WriteLine($"[Simple] Position gesetzt: {position} (binär: {Convert.ToString(position, 2).PadLeft(RobotConfig.PlacementPins.Length, '0')})");
         }
 
         static void ClearPosition()
         {
             var lines = new List<(int, int, bool)>();
-            foreach (var (group, pin) in RobotConfig.AblagePins)
+            foreach (var (group, pin) in RobotConfig.PlacementPins)
                 lines.Add((group, pin, false));
             pio.SetLines(lines);
         }
@@ -112,7 +112,7 @@ namespace _3D_Vier_Gewinnt_Server
         {
             pio.ClearAll();
             // Versorgung Schalter muss immer HIGH bleiben.
-            pio.SetLine(RobotConfig.VersorgungGroup, RobotConfig.VersorgungPin, true);
+            pio.SetLine(RobotConfig.PowerSupplyGroup, RobotConfig.PowerSupplyPin, true);
         }
     }
 }

@@ -9,7 +9,6 @@ namespace _3D_Vier_Gewinnt_Server
 {
     public class Program
     {
-        // Befehlszähler läuft 0-7 (3 Bit → DI[101, 102, 103])
         static int commandCounter = 0;
 
         // ── Handshake-Parameter ───────────────────────────────────────────────
@@ -19,6 +18,7 @@ namespace _3D_Vier_Gewinnt_Server
         const int PollIntervalMs      = 50;
         const int FeedbackStableReads = 5;      // Echo muss 5× (≈250 ms) stabil sein
         const int FeedbackTimeoutMs   = 30000;  // max. Wartezeit pro Zug
+        const int LogEveryNPolls      = 60;     // nur jede 60. Abfrage protokollieren
 
         enum RobotResult { Confirmed, TimedOut }
         // ──────────────────────────────────────────────────────────────────────
@@ -64,7 +64,7 @@ namespace _3D_Vier_Gewinnt_Server
 
             // Versorgung Schalter dauerhaft HIGH. Bleibt durch das Schatten-Byte
             // erhalten, auch wenn Ablage/Entnahme-Pins wechseln.
-            pio.SetLine(RobotConfig.VersorgungGroup, RobotConfig.VersorgungPin, true);
+            pio.SetLine(RobotConfig.PowerSupplyGroup, RobotConfig.PowerSupplyPin, true);
 
             if (USE_COMMAND_COUNTER)
             {
@@ -80,10 +80,10 @@ namespace _3D_Vier_Gewinnt_Server
 
         static void StartServer()
         {
-            TcpListener server = new TcpListener(IPAddress.Any, 5000);
+            TcpListener server = new TcpListener(IPAddress.Any, RobotConfig.ServerPort);
             server.Start();
 
-            Console.WriteLine("Server läuft auf Port 5000...");
+            Console.WriteLine($"Server läuft auf Port {RobotConfig.ServerPort}...");
 
             while (true)
             {
@@ -108,7 +108,7 @@ namespace _3D_Vier_Gewinnt_Server
 
         static void ExecuteMove(int x, int y, int player)
         {
-            int position = y * 4 + x;
+            int position = y * RobotConfig.BoardWidth + x;
             Console.WriteLine($"Position: {position}");
 
             // EIN Klick = EIN Befehl = ein kompletter Spielzug (Stein nehmen UND
@@ -118,10 +118,10 @@ namespace _3D_Vier_Gewinnt_Server
             //   - Befehlszähler   → DI[101..103] (zuletzt = Trigger für den Roboter)
             // Erst die Datenleitungen setzen, den Befehlszähler als Letztes, damit
             // die Daten beim Trigger schon stabil anliegen.
-            SetEntnahme(player);
+            SetPickup(player);
             SetPosition(position);
 
-            commandCounter = (commandCounter + 1) % 8;
+            commandCounter = (commandCounter + 1) % (1 << RobotConfig.CommandCounterBits);
             SendCommandCounter();
             Console.WriteLine($"[Befehl] gesendet: Zähler={commandCounter}, Position={position}, Player={player}");
 
@@ -132,12 +132,12 @@ namespace _3D_Vier_Gewinnt_Server
             {
                 // Spielzug fertig → alle Daten-Pins löschen, der Zähler bleibt stehen
                 // (er wechselt erst beim nächsten Befehl wieder).
-                ClearEntnahme();
+                ClearPickup();
                 ClearPosition();
             }
             else
             {
-                ClearEntnahme();
+                ClearPickup();
                 // Zug wurde nicht (stabil) bestätigt – bewusste Entscheidung statt
                 // Hängen: Daten-Pins NICHT löschen, damit ein noch laufender Zug die
                 // Entnahme/Ablage weiter anliegen hat. Fehler sichtbar machen.
@@ -148,11 +148,11 @@ namespace _3D_Vier_Gewinnt_Server
         // Setzt den Entnahme-Pin je nach Spieler und lässt ihn AN.
         // Player 1 (Grün):  EntnahmePos1+2 AUS              → kein Pin nötig
         // Player 2 (Blöck): EntnahmePos1 AN (B/2)           → DI[111]
-        static void SetEntnahme(int player)
+        static void SetPickup(int player)
         {
             if (player == 2)
             {
-                pio.SetLine(RobotConfig.EntnahmeGroup, RobotConfig.EntnahmePos1Pin, true);
+                pio.SetLine(RobotConfig.PickupGroup, RobotConfig.PickupPos1Pin, true);
                 Console.WriteLine("Entnahme: Schwarz (EntnahmePos1 AN)");
             }
             else
@@ -161,9 +161,9 @@ namespace _3D_Vier_Gewinnt_Server
             }
         }
 
-        static void ClearEntnahme()
+        static void ClearPickup()
         {
-            pio.SetLine(RobotConfig.EntnahmeGroup, RobotConfig.EntnahmePos1Pin, false);
+            pio.SetLine(RobotConfig.PickupGroup, RobotConfig.PickupPos1Pin, false);
         }
 
         // Setzt die Board-Position als 4-Bit-Binärwert (Ablage, siehe RobotConfig).
@@ -174,22 +174,22 @@ namespace _3D_Vier_Gewinnt_Server
         static void SetPosition(int position)
         {
             var lines = new List<(int, int, bool)>();
-            for (int i = 0; i < RobotConfig.AblagePins.Length; i++)
+            for (int i = 0; i < RobotConfig.PlacementPins.Length; i++)
             {
                 bool bit = (position & (1 << i)) != 0;
-                var (group, pin) = RobotConfig.AblagePins[i];
+                var (group, pin) = RobotConfig.PlacementPins[i];
                 lines.Add((group, pin, bit));
             }
             // Alle Ablage-Bits in einem Rutsch setzen (pro Gruppe ein Hardware-Write).
             pio.SetLines(lines);
 
-            Console.WriteLine($"Position gesetzt: {position} (binär: {Convert.ToString(position, 2).PadLeft(4, '0')})");
+            Console.WriteLine($"Position gesetzt: {position} (binär: {Convert.ToString(position, 2).PadLeft(RobotConfig.PlacementPins.Length, '0')})");
         }
 
         static void ClearPosition()
         {
             var lines = new List<(int, int, bool)>();
-            foreach (var (group, pin) in RobotConfig.AblagePins)
+            foreach (var (group, pin) in RobotConfig.PlacementPins)
                 lines.Add((group, pin, false));
             pio.SetLines(lines);
         }
@@ -241,7 +241,7 @@ namespace _3D_Vier_Gewinnt_Server
                     stableCount = 0;
                 }
                 else if (sawBusy)
-                {
+                {   
                     // Zielwert UND vorher echte Flanke → jetzt auf Stabilität prüfen.
                     stableCount++;
                     if (stableCount >= FeedbackStableReads)
@@ -251,10 +251,9 @@ namespace _3D_Vier_Gewinnt_Server
                     }
                 }
 
-                if (poll % 60 == 0)
+                if (poll % LogEveryNPolls == 0)
                 {
                     Console.WriteLine($"  ... Feedback={robotCounter}, erwartet={commandCounter}, stabil={stableCount}, sawBusy={sawBusy}");
-                    //LogPortCRaw("warten");
                 }
 
                 Thread.Sleep(PollIntervalMs);
@@ -264,16 +263,57 @@ namespace _3D_Vier_Gewinnt_Server
             return RobotResult.TimedOut;
         }
 
-        // TEMPORÄRER Mess-Helfer: protokolliert alle 8 Port-C-Linien roh, damit man
-        // am Teach-Lauf sieht, welche Pins beim Roboter-Echo tatsächlich auf den
-        // gesendeten Zählerwert kippen. Damit lässt sich RobotConfig.FeedbackPins
-        // (aktuell ungemessen) korrekt belegen. Nach dem Ausmessen wieder entfernen.
-        static void LogPortCRaw(string when)
+        // Wie WaitForRobot, aber mit echter Flanken-Erkennung IN den Zielwert hinein
+        // statt der sawBusy-Logik. Schließt den Spalt, dass ein von Anfang an (floatend/
+        // zufällig) passender Pegel sofort als Bestätigung gilt: es wird NUR bestätigt,
+        // nachdem ein Übergang von "!= commandCounter" auf "== commandCounter" wirklich
+        // beobachtet wurde.
+        static RobotResult WaitForRobot2()
         {
-            var sb = new StringBuilder($"[PortC {when}] ");
-            for (int pin = 0; pin < 8; pin++)
-                sb.Append($"C/{pin}={(usbInterface.DigitalInLine[RobotConfig.GroupC, pin] ? 1 : 0)} ");
-            Console.WriteLine(sb.ToString());
+            int stableCount = 0;
+
+            // Baseline VOR der Schleife: der Wert, den der Roboter noch vom vorherigen
+            // Befehl hält. Durch den +1-Zähler ist dieser garantiert != commandCounter,
+            // solange der Roboter den neuen Befehl noch nicht bestätigt hat.
+            int previous = ReadFeedback();
+
+            bool sawEdgeIntoTarget = false;
+            int maxPolls = FeedbackTimeoutMs / PollIntervalMs;
+
+            for (int poll = 0; poll < maxPolls; poll++)
+            {
+                int current = ReadFeedback();
+
+                // Flanke: Übergang von "nicht Zielwert" auf "Zielwert".
+                if (current == commandCounter && previous != commandCounter)
+                    sawEdgeIntoTarget = true;
+
+                if (sawEdgeIntoTarget && current == commandCounter)
+                {
+                    // Zielwert nach echter Flanke → auf Stabilität prüfen.
+                    stableCount++;
+                    if (stableCount >= FeedbackStableReads)
+                    {
+                        Console.WriteLine("Roboter hat bestätigt (stabil).");
+                        return RobotResult.Confirmed;
+                    }
+                }
+                else
+                {
+                    stableCount = 0;
+                }
+
+                if (poll % LogEveryNPolls == 0)
+                {
+                    Console.WriteLine($"  ... Feedback={current}, erwartet={commandCounter}, stabil={stableCount}, flanke={sawEdgeIntoTarget}");
+                }
+
+                previous = current;
+                Thread.Sleep(PollIntervalMs);
+            }
+
+            Console.WriteLine("TIMEOUT: keine stabile Bestätigung vom Roboter.");
+            return RobotResult.TimedOut;
         }
 
         // Liest den Rückgabe-Befehlszähler vom Roboter. Welche Eingangslinie für
@@ -299,7 +339,7 @@ namespace _3D_Vier_Gewinnt_Server
         {
             pio.ClearAll();
             // Versorgung danach wieder einschalten – die muss immer HIGH bleiben.
-            pio.SetLine(RobotConfig.VersorgungGroup, RobotConfig.VersorgungPin, true);
+            pio.SetLine(RobotConfig.PowerSupplyGroup, RobotConfig.PowerSupplyPin, true);
             commandCounter = 0;
         }
     }

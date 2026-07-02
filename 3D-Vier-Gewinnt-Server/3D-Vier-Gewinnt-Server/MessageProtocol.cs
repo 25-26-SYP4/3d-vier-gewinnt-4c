@@ -19,13 +19,19 @@ namespace _3D_Vier_Gewinnt_Server
         public const char Delimiter = '\n';
         public const string DoneResponse = "DONE\n";
 
+        // Lesepuffer für eingehende TCP-Daten (Bytes pro Read).
+        private const int BufferSize = 1024;
+
+        // Eine Zug-Nachricht besteht aus genau 3 Feldern: "x,y,player".
+        private const int ExpectedFields = 3;
+
         // Liest Zeile für Zeile vom Client, parst jeden Zug robust und ruft onMove auf.
         // Nach jedem erfolgreich verarbeiteten Zug wird "DONE\n" zurückgeschickt.
         // Kehrt zurück, wenn der Client die Verbindung schließt.
         public static void ServeMoves(TcpClient client, string tag, Action<int, int, int> onMove)
         {
             NetworkStream stream = client.GetStream();
-            byte[] buffer = new byte[1024];
+            byte[] buffer = new byte[BufferSize];
             string leftover = "";
 
             while (true)
@@ -76,7 +82,7 @@ namespace _3D_Vier_Gewinnt_Server
             if (string.IsNullOrWhiteSpace(line)) return false;
 
             string[] parts = line.Trim().Split(',');
-            if (parts.Length != 3) return false;
+            if (parts.Length != ExpectedFields) return false;
 
             return int.TryParse(parts[0], out x)
                 && int.TryParse(parts[1], out y)
