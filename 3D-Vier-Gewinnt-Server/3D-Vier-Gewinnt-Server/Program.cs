@@ -234,7 +234,7 @@ namespace _3D_Vier_Gewinnt_Server
             {
                 int robotCounter = ReadFeedback();
 
-                if (robotCounter != commandCounter)
+                if (robotCounter == commandCounter)
                 {
                     // Roboter ist noch dran / hält alten Wert → echte Flanke gesehen.
                     sawBusy = true;
